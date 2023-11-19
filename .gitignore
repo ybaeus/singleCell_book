@@ -1,0 +1,24 @@
+# test 
+test.Rmd
+test.html
+testing/
+*.docx
+*.html
+
+# others
+figures/
+others/
+src/results/
+*.h5
+src/singleCell_practice/rds/
+
+# log
+.Rhistory
+*.log
+.DS_Store
+.RDataTmp
+.Rproj.user
+
+# cache
+*.tex
+
