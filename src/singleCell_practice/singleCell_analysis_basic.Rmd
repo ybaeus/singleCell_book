@@ -1,0 +1,229 @@
+---
+title: "singleCell_분석_기초"
+author: "yeji Bae"
+date: "2023-10-10"
+output: html_document
+---
+
+해당 스크립트는 "실전 단일세포 데이터 분석: 예제 코드와 데이터로 배우는 생물정보 분석 기술" 책에서 따라 할 수 있도록 제작된 실습 스크립트 '기초편' 입니다. 현재 보고 계시는 코드는 제일 기본 코드이며, 조금 더 심화된 코드를 확인 하고 싶다면 ____.Rmd 파일을 확인해주세요. 만약, 단일 세포 분석이 처음이시라면, 기초, 중급, 고급 스크립트를 하나씩 소화해 나가시길 추천합니다. 
+
+각 코드블럭에 대한 자세한 설명은 언급되어 있는 챕터에 나와있는 설명들을 참고바랍니다. 질문 사항이 있거나, 코드를 돌리는데 어려움이 있다면 github페이지에서 -> 'issue' 탭 -> 'New issue' 버튼을 클릭해서 작성해주시면 빠른 시일내에 답변드리겠습니다. 
+
+도협 박사님! '# Question' 이라고 적은 부분과 주석들을 자세히 읽고 피드백 부탁 드립니다.
+
+```{r setup, include=FALSE} 
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(echo = TRUE)
+# setwd("~/Desktop/YJ/singleCell_Book/src/singleCell_practice/") 
+```
+
+# 필요한 라이브러리 불러오기 
+챕터 02-02 'R 패키지 설치 및 실행'
+```{r}
+library(Seurat)
+library(dplyr)
+```
+
+# 데이터 불러오기
+챕터 05-01 'Seurat Object 만들기'
+```{r}
+# 각 샘플마다 raw matrix 를 Seurat object 로 생성하기
+count_SRR13911909.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911909.h5", use.names = TRUE, unique.features = TRUE)
+SRR13911909.h5.sobj <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer")
+
+count_SRR13911910.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911910.h5", use.names = TRUE, unique.features = TRUE)
+SRR13911910.h5.sobj <- CreateSeuratObject(counts = count_SRR13911910.h5, project = "pbmc_alzheimer")
+
+count_SRR13911911.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911911.h5", use.names = TRUE, unique.features = TRUE)
+SRR13911911.h5.sobj <- CreateSeuratObject(counts = count_SRR13911911.h5, project = "pbmc_alzheimer")
+
+count_SRR13911912.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911912.h5", use.names = TRUE, unique.features = TRUE)
+SRR13911912.h5.sobj <- CreateSeuratObject(counts = count_SRR13911912.h5, project = "pbmc_alzheimer")
+
+count_SRR13911913.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911913.h5", use.names = TRUE, unique.features = TRUE)
+SRR13911913.h5.sobj <- CreateSeuratObject(counts = count_SRR13911913.h5, project = "pbmc_alzheimer")
+
+count_SRR13911914.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911914.h5", use.names = TRUE, unique.features = TRUE)
+SRR13911914.h5.sobj <- CreateSeuratObject(counts = count_SRR13911914.h5, project = "pbmc_alzheimer")
+```
+
+```{r}
+# TODO!! 
+# seurat object 둘러보기 
+SRR13911909.h5.sobj
+dim(SRR13911909.h5.sobj)
+colnames(SRR13911909.h5.sobj)[1:10]
+rownames(SRR13911909.h5.sobj)[1:10]
+
+## 메타데이터 
+SRR13911909.h5.sobj[[]] 
+SRR13911909.h5.sobj@meta.data 
+
+## 
+SRR13911909.h5.sobj@ # @뒤에서 'tab'을 눌러서 어떤 데이터를 불러 올 수 있는지 확인해 보세요. 
+```
+
+
+
+# QC/filtering
+챕터 05-02 '품질관리 (QC) 및 필터링'
+```{r}
+# QC plot 시각화 
+```
+
+```{r}
+# 각 샘플마다 미토콘드리아 비율 구하기 
+SRR13911909.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911909.h5.sobj, pattern = "^MT-")
+SRR13911910.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911910.h5.sobj, pattern = "^MT-")
+SRR13911911.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911911.h5.sobj, pattern = "^MT-")
+SRR13911912.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911912.h5.sobj, pattern = "^MT-")
+SRR13911913.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911913.h5.sobj, pattern = "^MT-")
+SRR13911914.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911914.h5.sobj, pattern = "^MT-")
+
+# 필터링 
+SRR13911909.h5.sobj <- subset(SRR13911909.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)  
+SRR13911910.h5.sobj <- subset(SRR13911910.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
+SRR13911911.h5.sobj <- subset(SRR13911911.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
+SRR13911912.h5.sobj <- subset(SRR13911912.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
+SRR13911913.h5.sobj <- subset(SRR13911913.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
+SRR13911914.h5.sobj <- subset(SRR13911914.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
+```
+
+
+# Normalization + Integration + Dimension reduction
+챕터 06 + 07 
+
+## log normalization 
+```{r}
+```
+
+## SCTransform
+  TODO: SCTransform v1 vs v2 
+  
+```{r}
+# 방법 1: 각 샘플을 정규화 한 후, 합치기 
+SRR13911909.h5.sobj_SCT <- SCTransform(SRR13911909.h5.sobj, verbose = FALSE) %>%
+    RunPCA(npcs = 30, verbose = FALSE)
+SRR13911910.h5.sobj_SCT <- SCTransform(SRR13911910.h5.sobj, verbose = FALSE) %>%
+    RunPCA(npcs = 30, verbose = FALSE)
+SRR13911911.h5.sobj_SCT <- SCTransform(SRR13911911.h5.sobj, verbose = FALSE) %>%
+    RunPCA(npcs = 30, verbose = FALSE)
+SRR13911912.h5.sobj_SCT <- SCTransform(SRR13911912.h5.sobj, verbose = FALSE) %>%
+    RunPCA(npcs = 30, verbose = FALSE)
+SRR13911913.h5.sobj_SCT <- SCTransform(SRR13911913.h5.sobj, verbose = FALSE) %>%
+    RunPCA(npcs = 30, verbose = FALSE)
+SRR13911914.h5.sobj_SCT <- SCTransform(SRR13911914.h5.sobj, verbose = FALSE) %>%
+    RunPCA(npcs = 30, verbose = FALSE)
+
+# 하나의 리스트로 묶기 
+pbmc_alzheimer_SCT.list <- list(SRR13911909.h5.sobj_SCT = SRR13911909.h5.sobj_SCT, SRR13911910.h5.sobj_SCT = SRR13911910.h5.sobj_SCT,
+                  SRR13911911.h5.sobj_SCT = SRR13911911.h5.sobj_SCT, SRR13911912.h5.sobj_SCT = SRR13911912.h5.sobj_SCT,
+                  SRR13911913.h5.sobj_SCT = SRR13911913.h5.sobj_SCT , SRR13911914.h5.sobj_SCT = SRR13911914.h5.sobj_SCT)
+
+## 데이터가 큰 단일 세포를 분석할 때는, 오래 걸리는 함수를 돌린 후 나온 결과를 rds 파일 형태로 저장합니다.
+## 이는 다음에 이어서 분석을 진행할때 처음부터 다시 돌릴 필요 없이, 저장해논 rds 파일을 불러와 진행시키기 위함입니다. 
+# saveRDS(pbmc_alzheimer_SCT.list, "./rds/pbmc_alzheimer_SCT.list.rds") 
+
+# Integration
+features <- SelectIntegrationFeatures(object.list = pbmc_alzheimer_SCT.list, nfeatures = 3000) # Question: 2000 or 3000? 
+pbmc_alzheimer_SCT.list <- PrepSCTIntegration(object.list = pbmc_alzheimer_SCT.list, anchor.features = features)
+# saveRDS(features, "./rds/features.rds")
+# saveRDS(pbmc_alzheimer_SCT.list, "./rds/pbmc_alzheimer_SCT.list.rds")
+
+# find anchors
+pbmc_alzheimer_SCT.anchors <- FindIntegrationAnchors(object.list = pbmc_alzheimer_SCT.list, normalization.method = "SCT", anchor.features = features) # for now, its name is samples.anchor
+# saveRDS(pbmc_alzheimer_SCT.anchors, "./rds/pbmc_alzheimer_SCT.anchors.rds")
+pbmc_alzheimer_SCT.combined <- IntegrateData(anchorset = pbmc_alzheimer_SCT.anchors, normalization.method = "SCT") # 터지거나 많이 오래 걸림 
+# saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT.combined.rds")
+```
+
+```{r}
+# 방법 2 : 모든 샘플을 합친 후, 한번에 정규화 하기 
+pbmc_alzheimer_2 <- merge(SRR13911909.h5.sobj, y = c(SRR13911910.h5.sobj, SRR13911911.h5.sobj,SRR13911912.h5.sobj,SRR13911913.h5.sobj,SRR13911914.h5.sobj), add.cell.ids = c("SRR13911909", "SRR13911910", "SRR13911911", "SRR13911912", "SRR13911913", "SRR13911914"), project = "pbmc_alzheimer")
+saveRDS(pbmc_alzheimer_2, "./rds/pbmc_alzheimer_2.rds")
+
+pbmc_alzheimer_2_SCT <- SCTransform(pbmc_alzheimer_2, verbose = FALSE) # 터짐 
+# saveRDS(pbmc_alzheimer_2_SCT, "./rds/pbmc_alzheimer_2_SCT.rds") 
+# pbmc_alzheimer_2_SCT <- SCTransform(pbmc_alzheimer_2, verbose = FALSE) %>% #  vst.flavor = "v2",
+#                             RunPCA(npcs = 30, verbose = FALSE) %>%
+#                             RunUMAP(reduction = "pca", dims = 1:30, verbose = FALSE) %>%
+#                             FindNeighbors(reduction = "pca", dims = 1:30, verbose = FALSE) %>%
+#                             FindClusters(resolution = 0.7, verbose = FALSE)
+# saveRDS(pbmc_alzheimer_2_SCT, "./rds/pbmc_alzheimer_2_SCT.rds")
+
+```
+
+
+# perform an integrated analysis
+
+```{r}
+# 정규화 방법 1 이어서 ... 
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = FALSE)
+pbmc_alzheimer_SCT.combined <- RunUMAP(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:30, verbose = FALSE)
+pbmc_alzheimer_SCT.combined <- FindNeighbors(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:30)
+pbmc_alzheimer_SCT.combined <- FindClusters(pbmc_alzheimer_SCT.combined, resolution = 0.3)
+
+DimPlot(pbmc_alzheimer_SCT.combined, reduction = "umap")
+saveRDS(pbmc_alzheimer_SCT.combined, "./rds/sobj_SCT_merged_method_1_clustered.rds")
+sobj_SCT_merged_method_1_clustered <- readRDS("./rds/sobj_SCT_merged_method_1_clustered.rds")
+```
+
+# Annotation
+챕터 08
+```{r}
+# install.packages("BiocManager")
+```
+
+```{r}
+# Loading reference data with Ensembl annotations.
+# BiocManager::install("celldex")
+library(celldex)
+# devtools::install_version("dbplyr", version = "2.3.4") # https://stackoverflow.com/questions/77370659/error-failed-to-collect-lazy-table-caused-by-error-in-db-collect-using\
+# library(dbplyr)
+ref.data <- HumanPrimaryCellAtlasData(ensembl=F)
+
+## singeR 
+# devtools::install_github('dviraran/SingleR')
+library(SingleR)
+library(Seurat)
+sobj_SCE <- as.SingleCellExperiment(sobj_SCT_merged_method_1_clustered, assay="SCT")
+# ref_SCE <- as.SingleCellExperiment(ref.data, assay="SCT") # not work for both RNA, SCT
+# invalid class “Seurat” object: 1: all cells in graphs must be present in the Seurat object
+results <- SingleR(test = sobj_SCE, ref = ref.data, labels = ref.data$label.main) 
+# write.csv(results, "./sobj_SCT_merged_method_1_clustered_singleR.csv")
+```
+
+```{r, fig.width= 10}
+sobj_SCT_merged_method_1_clustered$singleR_label <- results$labels
+sobj_SCT_merged_method_1_clustered$singleR_pruned_label <- results$pruned.labels
+
+Idents(sobj_SCT_merged_method_1_clustered) <- sobj_SCT_merged_method_1_clustered$singleR_pruned_label # or singleR_label
+DimPlot(sobj_SCT_merged_method_1_clustered, label = T, reduction = "umap")
+
+
+## 3D UMAP 
+```
+```{r}
+# sctype() 오 근데 이거 python 였던것 같은데 아닌가?
+```
+
+
+
+
+```{r}
+# library(msm_fit)
+```
+
+
+
+
+

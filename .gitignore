@@ -11,8 +11,11 @@ others/
 src/results/
 *.h5
 src/singleCell_practice/rds/
+*.rds
+*.csv
 
 # log
+.Rapp.history
 .Rhistory
 *.log
 .DS_Store
