@@ -62,7 +62,7 @@ print( Sys.time() - start )
 ```
 
 
-[코드 5 - 2] 모든 샘플을 Seurat 오브젝트 변형하기
+[코드 5 - 2] 모든 샘플을 Seurat 오브젝트로 변형하기
 ```{r}
 # 각 샘플마다 raw matrix 를 Seurat object 로 생성하기
 count_SRR13911909.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911909.h5", use.names = TRUE, unique.features = TRUE)
@@ -106,7 +106,7 @@ SRR13911909.h5.sobj@ # @뒤에서 'tab'을 눌러서 어떤 데이터를 불러 
 
 ## 챕터 05-02 '품질관리 (QC) 및 필터링'
 
-미토콘드리아 비율 구하기
+[코드 5-3] 미토콘드리아 비율 구하기
 ```{r}
 # 각 샘플마다 미토콘드리아 비율 구하기 
 SRR13911909.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911909.h5.sobj, pattern = "^MT-")
@@ -117,7 +117,7 @@ SRR13911913.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911913.h5.sobj,
 SRR13911914.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911914.h5.sobj, pattern = "^MT-")
 ```
 
-QC plots 시각화 하기 
+[코드 5-4,5] QC plots 시각화 하기 
 ```{r}
 # Violoin plot 
 VlnPlot(SRR13911909.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
@@ -142,7 +142,7 @@ FeatureScatter(SRR13911914.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeatur
 FeatureScatter(SRR13911914.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent.mt")
 ```
 
-위의 플롯들을 이용해서 필터링 하기 
+[코드 5-6] 위의 플롯들을 이용해서 필터링 하기 
 ```{r}
 # 필터링 
 SRR13911909.h5.sobj <- subset(SRR13911909.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)  
@@ -153,12 +153,14 @@ SRR13911913.h5.sobj <- subset(SRR13911913.h5.sobj, subset = nFeature_RNA > 200 &
 SRR13911914.h5.sobj <- subset(SRR13911914.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
 ```
 
-필터링 된 데이터의 QC 플롯 그려보기 
+[코드 5-7] 필터링 된 데이터의 QC 플롯 그려보기 
 ```{r}
 # 예시 - SRR13911909.h5.sobj
 VlnPlot(SRR13911909.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
 FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent.mt")
 FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+
+# Task: 다른 샘플들의 QC 플롯들도 그려보세요. 
 ```
 
 
