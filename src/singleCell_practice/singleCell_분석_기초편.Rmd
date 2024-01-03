@@ -66,22 +66,22 @@ print( Sys.time() - start )
 ```{r}
 # 각 샘플마다 raw matrix 를 Seurat object 로 생성하기
 count_SRR13911909.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911909.h5", use.names = TRUE, unique.features = TRUE)
-SRR13911909.h5.sobj <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer")
+SRR13911909.h5.sobj <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 
 count_SRR13911910.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911910.h5", use.names = TRUE, unique.features = TRUE)
-SRR13911910.h5.sobj <- CreateSeuratObject(counts = count_SRR13911910.h5, project = "pbmc_alzheimer")
+SRR13911910.h5.sobj <- CreateSeuratObject(counts = count_SRR13911910.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 
 count_SRR13911911.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911911.h5", use.names = TRUE, unique.features = TRUE)
-SRR13911911.h5.sobj <- CreateSeuratObject(counts = count_SRR13911911.h5, project = "pbmc_alzheimer")
+SRR13911911.h5.sobj <- CreateSeuratObject(counts = count_SRR13911911.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 
 count_SRR13911912.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911912.h5", use.names = TRUE, unique.features = TRUE)
-SRR13911912.h5.sobj <- CreateSeuratObject(counts = count_SRR13911912.h5, project = "pbmc_alzheimer")
+SRR13911912.h5.sobj <- CreateSeuratObject(counts = count_SRR13911912.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 
 count_SRR13911913.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911913.h5", use.names = TRUE, unique.features = TRUE)
-SRR13911913.h5.sobj <- CreateSeuratObject(counts = count_SRR13911913.h5, project = "pbmc_alzheimer")
+SRR13911913.h5.sobj <- CreateSeuratObject(counts = count_SRR13911913.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 
 count_SRR13911914.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911914.h5", use.names = TRUE, unique.features = TRUE)
-SRR13911914.h5.sobj <- CreateSeuratObject(counts = count_SRR13911914.h5, project = "pbmc_alzheimer")
+SRR13911914.h5.sobj <- CreateSeuratObject(counts = count_SRR13911914.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 ```
 
 Seurat 오브젝트 둘러보기 
@@ -185,6 +185,7 @@ Question - 해당 부분 보완 가능하면 부탁드립니다
 
 - *NormalizeData()*: https://satijalab.org/seurat/reference/normalizedata 
 - *merge()*: https://satijalab.org/seurat/articles/seurat5_merge_vignette#merging-more-than-two-seurat-objects
+[코드 6-1] 로그 정규화 방법 1
 ```{r}
 # 방법 1 # 
 # 샘플 별 정규화 진행하기 
@@ -201,41 +202,71 @@ pbmc_alzheimer_Log_1 <- merge(SRR13911909.h5.sobj_norm,
                               add.cell.ids = c("SRR13911909", "SRR13911910", "SRR13911911", "SRR13911912", "SRR13911913", "SRR13911914"), 
                               project = "pbmc_alzheimer", 
                               merge.data = TRUE)
+
+# 유의미한 유전자 추출하기 (feature selection)
+pbmc_alzheimer_Log_1 <- FindVariableFeatures(pbmc_alzheimer_Log_1, selection.method = "vst", nfeatures = 2000)
+# saveRDS(pbmc_alzheimer_Log_1, "./rds/pbmc_alzheimer_Log_1.rds") #  
+
+# 스케일링  
+pbmc_alzheimer_Log_1 <- ScaleData(pbmc_alzheimer_Log_1) # features = all.genes
+
+# by default scaling only variable features, but we can use all genes
+# all.genes <- rownames(pbmc_alzheimer_Log_1)
+# pbmc_alzheimer_Log_1 <- ScaleData(pbmc_alzheimer_Log_1, features = all.genes)
+```
+[코드 6-2] 여러 카운트 값 비교하기 
+```{r}
+# raw 데이터 
+pbmc_alzheimer_Log_1[["RNA"]]$counts.1 # 혹은 pbmc_alzheimer_Log_1@assays$RNA$counts.1
+
+# 정규화 된 데이터 
+pbmc_alzheimer_Log_1[["RNA"]]$data.1
+
+# 스케일링 된 데이터 
+pbmc_alzheimer_Log_1[["RNA"]]$scale.data[1:5, 1:2]
 ```
 
+
+[코드 6-3] 로그 정규화 방법 2
 ```{r}
 # 방법 2 # 
 # 각 seurat object 들 합지기 
-pbmc_alzheimer_2 <- merge(SRR13911909.h5.sobj, y = c(SRR13911910.h5.sobj, SRR13911911.h5.sobj,SRR13911912.h5.sobj,SRR13911913.h5.sobj,SRR13911914.h5.sobj), add.cell.ids = c("SRR13911909", "SRR13911910", "SRR13911911", "SRR13911912", "SRR13911913", "SRR13911914"), project = "pbmc_alzheimer")
+pbmc_alzheimer_Log_2 <- merge(SRR13911909.h5.sobj, y = c(SRR13911910.h5.sobj, SRR13911911.h5.sobj,SRR13911912.h5.sobj,SRR13911913.h5.sobj,SRR13911914.h5.sobj), add.cell.ids = c("SRR13911909", "SRR13911910", "SRR13911911", "SRR13911912", "SRR13911913", "SRR13911914"), project = "pbmc_alzheimer")
 
 # 한번에 로그정규화 진행하기
-pbmc_alzheimer_Log_2 <- NormalizeData(pbmc_alzheimer_2)
+pbmc_alzheimer_Log_2 <- NormalizeData(pbmc_alzheimer_Log_2, scale.factor = 10000)
+
+# 유의미한 유전자 추출하기 (feature selection)
+pbmc_alzheimer_Log_2 <- FindVariableFeatures(pbmc_alzheimer_Log_2, selection.method = "vst", nfeatures = 2000)
+
+# 스케일링
+pbmc_alzheimer_Log_2 <- ScaleData(pbmc_alzheimer_Log_2)
 ```
-Question - Log normalization Integration? 
+Question - Log normalization 한 후 Integration? 
 
 
 ## SCTransform
 챕터 06-01-SCTranfrom정규화 이용 
 "https://satijalab.org/seurat/articles/sctransform_vignette" 에서 더 자세한 내용을 확인 할 수 있습니다. 
+우리는 방법 1을 이용해서 추후 후속 분석을 진행할 예정입니다.
 
-TODO: SCTransform v1 vs v2 ? 
-  
 *SCTransform()*: https://satijalab.org/seurat/reference/sctransform 
-[방법 1]
+
+[코드 6-4]
 ```{r}
 # 방법 1 # 
 # 샘플 별 정규화 진행하기 
-SRR13911909.h5.sobj_SCT <- SCTransform(SRR13911909.h5.sobj, verbose = FALSE) %>%
+SRR13911909.h5.sobj_SCT <- SCTransform(SRR13911909.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) %>%
   RunPCA(npcs = 30, verbose = FALSE)
-SRR13911910.h5.sobj_SCT <- SCTransform(SRR13911910.h5.sobj, verbose = FALSE) %>%
+SRR13911910.h5.sobj_SCT <- SCTransform(SRR13911910.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) %>%
     RunPCA(npcs = 30, verbose = FALSE)
-SRR13911911.h5.sobj_SCT <- SCTransform(SRR13911911.h5.sobj, verbose = FALSE) %>%
+SRR13911911.h5.sobj_SCT <- SCTransform(SRR13911911.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) %>%
     RunPCA(npcs = 30, verbose = FALSE)
-SRR13911912.h5.sobj_SCT <- SCTransform(SRR13911912.h5.sobj, verbose = FALSE) %>%
+SRR13911912.h5.sobj_SCT <- SCTransform(SRR13911912.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) %>%
     RunPCA(npcs = 30, verbose = FALSE)
-SRR13911913.h5.sobj_SCT <- SCTransform(SRR13911913.h5.sobj, verbose = FALSE) %>%
+SRR13911913.h5.sobj_SCT <- SCTransform(SRR13911913.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) %>%
     RunPCA(npcs = 30, verbose = FALSE)
-SRR13911914.h5.sobj_SCT <- SCTransform(SRR13911914.h5.sobj, verbose = FALSE) %>%
+SRR13911914.h5.sobj_SCT <- SCTransform(SRR13911914.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) %>%
     RunPCA(npcs = 30, verbose = FALSE)
 
 # 여러 seurat object 를 하나의 리스트로 묶기 
@@ -255,9 +286,10 @@ pbmc_alzheimer_SCT.anchors <- FindIntegrationAnchors(object.list = pbmc_alzheime
 # saveRDS(pbmc_alzheimer_SCT.anchors, "./rds/pbmc_alzheimer_SCT.anchors.rds")
 pbmc_alzheimer_SCT.combined <- IntegrateData(anchorset = pbmc_alzheimer_SCT.anchors, normalization.method = "SCT") # 메모리가 부족하면 (64GB 미만) 터질 수 있습니다.
 # saveRDS(pbmc_alzheimer_SCT.combined, "./rds/sobj_SCT_merged_method_1.rds")
+
 ```
 
-[방법 2]
+[코드 6-5]
 ```{r}
 # 방법 2 # 
 pbmc_alzheimer_2 <- merge(SRR13911909.h5.sobj, y = c(SRR13911910.h5.sobj, SRR13911911.h5.sobj,SRR13911912.h5.sobj,SRR13911913.h5.sobj,SRR13911914.h5.sobj), add.cell.ids = c("SRR13911909", "SRR13911910", "SRR13911911", "SRR13911912", "SRR13911913", "SRR13911914"), project = "pbmc_alzheimer")
@@ -267,6 +299,15 @@ pbmc_alzheimer_2_SCT <- SCTransform(pbmc_alzheimer_2, verbose = FALSE)
 ```
 
 우리는 ___ 방법으로 진행하도록 하겠습니다. 이유는?  
+
+```{r}
+pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combinded_2.rds") # percent.mt < 10, min.cell, min.feature, vars.to.regress = "percent.mt", 적용 ## # pbmc_alzheimer_SCT.combinded_1.rds 은 percent.mt < 5, 나머지 적용 안함
+```
+
+```{r}
+# meta data 추가하기
+```
+
 
 # 07 "차원 축소 및 클러스터링" 
 ## TODO: 이름 맞춰주기 방법 1 이랑 2랑 중에서  
