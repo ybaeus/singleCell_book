@@ -252,7 +252,8 @@ Question - Log normalization 한 후 Integration?
 
 *SCTransform()*: https://satijalab.org/seurat/reference/sctransform 
 
-[코드 6-4]
+[코드 6-4] SCTransform 방법 1 
+[코드 6-5] SCTransform 을 이용하여 데이터 합치기 (Integration)
 ```{r}
 # 방법 1 # 
 # 샘플 별 정규화 진행하기 
@@ -274,22 +275,29 @@ pbmc_alzheimer_SCT.list <- list(SRR13911909.h5.sobj_SCT = SRR13911909.h5.sobj_SC
                   SRR13911911.h5.sobj_SCT = SRR13911911.h5.sobj_SCT, SRR13911912.h5.sobj_SCT = SRR13911912.h5.sobj_SCT,
                   SRR13911913.h5.sobj_SCT = SRR13911913.h5.sobj_SCT , SRR13911914.h5.sobj_SCT = SRR13911914.h5.sobj_SCT)
 saveRDS(pbmc_alzheimer_SCT.list, "./rds/pbmc_alzheimer_SCT.list.rds")
+# pbmc_alzheimer_SCT.list <- readRDS("./rds/pbmc_alzheimer_SCT.list.rds")
 ## 데이터가 큰 단일 세포를 분석할 때는, 오래 걸리는 함수를 돌린 후 나온 결과를 rds 파일 형태로 저장합니다.
 ## 이는 다음에 이어서 분석을 진행할때 처음부터 다시 돌릴 필요 없이, 저장해 둔 rds 파일을 불러와 진행시키기 위함입니다. 
 
 # 정규화 된 seurat object 합치기 
-features <- SelectIntegrationFeatures(object.list = pbmc_alzheimer_SCT.list, nfeatures = 3000) #Question: 2000 or 3000? 
+features <- SelectIntegrationFeatures(object.list = pbmc_alzheimer_SCT.list, nfeatures = 3000) 
 pbmc_alzheimer_SCT.list <- PrepSCTIntegration(object.list = pbmc_alzheimer_SCT.list, anchor.features = features)
 
 # 샘플 간의 앵커 찾기
-pbmc_alzheimer_SCT.anchors <- FindIntegrationAnchors(object.list = pbmc_alzheimer_SCT.list, normalization.method = "SCT", anchor.features = features) # its name is samples.anchor
+pbmc_alzheimer_SCT.anchors <- FindIntegrationAnchors(object.list = pbmc_alzheimer_SCT.list, normalization.method = "SCT", anchor.features = features)
 # saveRDS(pbmc_alzheimer_SCT.anchors, "./rds/pbmc_alzheimer_SCT.anchors.rds")
-pbmc_alzheimer_SCT.combined <- IntegrateData(anchorset = pbmc_alzheimer_SCT.anchors, normalization.method = "SCT") # 메모리가 부족하면 (64GB 미만) 터질 수 있습니다.
-# saveRDS(pbmc_alzheimer_SCT.combined, "./rds/sobj_SCT_merged_method_1.rds")
-
+pbmc_alzheimer_SCT.combinded <- IntegrateData(anchorset = pbmc_alzheimer_SCT.anchors, normalization.method = "SCT") # 메모리가 부족하면 (64GB 미만) 터질 수 있습니다.
+# saveRDS(pbmc_alzheimer_SCT.combinded, "./rds/sobj_SCT_merged_method.rds")
 ```
 
-[코드 6-5]
+```{r}
+pbmc_alzheimer_SCT.combinded <- readRDS("./rds/pbmc_alzheimer_SCT.combinded_2.rds") 
+# (메모용) pbmc_alzheimer_SCT.combinded_1.rds, mt < 5%
+# (메모용) pbmc_alzheimer_SCT.combinded_2.rds, mt < 10%, min.cell = 3, min.features = 200, regress=mt
+# (Question) Active assay: integrated (2000 features, 2000 variable features) why 2000 features?? i thought i used 3000 , check with him
+```
+
+[코드 6-6] SCTransform 방법 2
 ```{r}
 # 방법 2 # 
 pbmc_alzheimer_2 <- merge(SRR13911909.h5.sobj, y = c(SRR13911910.h5.sobj, SRR13911911.h5.sobj,SRR13911912.h5.sobj,SRR13911913.h5.sobj,SRR13911914.h5.sobj), add.cell.ids = c("SRR13911909", "SRR13911910", "SRR13911911", "SRR13911912", "SRR13911913", "SRR13911914"), project = "pbmc_alzheimer")
@@ -298,16 +306,25 @@ pbmc_alzheimer_2 <- merge(SRR13911909.h5.sobj, y = c(SRR13911910.h5.sobj, SRR139
 pbmc_alzheimer_2_SCT <- SCTransform(pbmc_alzheimer_2, verbose = FALSE) 
 ```
 
-우리는 ___ 방법으로 진행하도록 하겠습니다. 이유는?  
 
+[코드 6-7] 메타 데이터 추가하기 
 ```{r}
-pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combinded_2.rds") # percent.mt < 10, min.cell, min.feature, vars.to.regress = "percent.mt", 적용 ## # pbmc_alzheimer_SCT.combinded_1.rds 은 percent.mt < 5, 나머지 적용 안함
-```
+# 'Run' = 샘플 이름 추가하기 
+pbmc_alzheimer_SCT.combinded@meta.data <- pbmc_alzheimer_SCT.combinded@meta.data %>%
+  mutate(Run = ifelse(grepl("_1", rownames(.)), "SRR13911909", 
+                              ifelse(grepl("_2", rownames(.)), "SRR13911910",
+                                     ifelse(grepl("_3", rownames(.)), "SRR13911911",
+                                            ifelse(grepl("_4", rownames(.)), "SRR13911912",
+                                                   ifelse(grepl("_5", rownames(.)), "SRR13911913",
+                                                          ifelse(grepl("_6", rownames(.)), "SRR13911914", "NA")))))))
 
-```{r}
+# manifest
+manifest <- read.csv("../singleCell_practice/SraRunTable.txt")
+manifest <- manifest %>% # 필요한 컬럼만 추출해내기 
+  select(c(Run, Age, subject_status))
 # meta data 추가하기
+pbmc_alzheimer_SCT.combinded@meta.data <- pbmc_alzheimer_SCT.combinded@meta.data %>% left_join(manifest, by = "Run")
 ```
-
 
 # 07 "차원 축소 및 클러스터링" 
 ## TODO: 이름 맞춰주기 방법 1 이랑 2랑 중에서  
