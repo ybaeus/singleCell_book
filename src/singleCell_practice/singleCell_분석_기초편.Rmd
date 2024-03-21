@@ -174,7 +174,7 @@ FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeatur
 
 
 
-# Chapter 06 "정규화 및 배치 교정"
+# 챕터 06 "데이터 정규화 및 통합"
 = Normalization + Integration + Dimension reduction
 
 Question - 해당 부분 보완 가능하면 부탁드립니다 
@@ -289,15 +289,15 @@ pbmc_alzheimer_SCT.list <- PrepSCTIntegration(object.list = pbmc_alzheimer_SCT.l
 # 샘플 간의 앵커 찾기
 pbmc_alzheimer_SCT.anchors <- FindIntegrationAnchors(object.list = pbmc_alzheimer_SCT.list, normalization.method = "SCT", anchor.features = features)
 # saveRDS(pbmc_alzheimer_SCT.anchors, "./rds/pbmc_alzheimer_SCT.anchors.rds")
-pbmc_alzheimer_SCT.combinded <- IntegrateData(anchorset = pbmc_alzheimer_SCT.anchors, normalization.method = "SCT") # 메모리가 부족하면 (64GB 미만) 터질 수 있습니다.
-# saveRDS(pbmc_alzheimer_SCT.combinded, "./rds/sobj_SCT_merged_method.rds")
+pbmc_alzheimer_SCT.combined <- IntegrateData(anchorset = pbmc_alzheimer_SCT.anchors, normalization.method = "SCT") # 메모리가 부족하면 (64GB 미만) 터질 수 있습니다.
+# saveRDS(pbmc_alzheimer_SCT.combined, "./rds/sobj_SCT_merged_method.rds")
 
 ```
 
 ```{r}
-pbmc_alzheimer_SCT.combinded <- readRDS("./rds/pbmc_alzheimer_SCT.combinded_2.rds")  # 2024.01.16 final so far
-# (메모용) pbmc_alzheimer_SCT.combinded_1.rds, mt < 5%
-# (메모용) pbmc_alzheimer_SCT.combinded_2.rds, mt < 10%, min.cell = 3, min.features = 200, regress=mt
+pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combined_2.rds")  # 2024.01.16 final so far
+# (메모용) pbmc_alzheimer_SCT.combined_1.rds, mt < 5%
+# (메모용) pbmc_alzheimer_SCT.combined_2.rds, mt < 10%, min.cell = 3, min.features = 200, regress=mt
 # (Question) Active assay: integrated (2000 features, 2000 variable features) why 2000 features?? i thought i used 3000 , check with him
 ```
 
@@ -314,7 +314,7 @@ pbmc_alzheimer_2_SCT <- SCTransform(pbmc_alzheimer_2, verbose = FALSE)
 [코드 6-7] 메타 데이터 추가하기 
 ```{r}
 # 'Run' = 샘플 이름 추가하기 
-pbmc_alzheimer_SCT.combinded@meta.data <- pbmc_alzheimer_SCT.combinded@meta.data %>%
+pbmc_alzheimer_SCT.combined@meta.data <- pbmc_alzheimer_SCT.combined@meta.data %>%
   mutate(Run = ifelse(grepl("_1", rownames(.)), "SRR13911909", 
                               ifelse(grepl("_2", rownames(.)), "SRR13911910",
                                      ifelse(grepl("_3", rownames(.)), "SRR13911911",
@@ -327,8 +327,8 @@ manifest <- read.csv("../singleCell_practice/SraRunTable.txt")
 manifest <- manifest %>% # 필요한 컬럼만 추출해내기 
   select(c(Run, Age, subject_status))
 
-pbmc_alzheimer_SCT.combinded@meta.data[c("Run", "Age", "subject_status")] <-
-  manifest[match(pbmc_alzheimer_SCT.combinded$Run, manifest$Run), ]
+pbmc_alzheimer_SCT.combined@meta.data[c("Run", "Age", "subject_status")] <-
+  manifest[match(pbmc_alzheimer_SCT.combined$Run, manifest$Run), ]
 ```
 
 # 07 "차원 축소 및 클러스터링" 
@@ -341,39 +341,40 @@ SCTransform [방법 1]을 이어서 진행합니다.
 
 
 [코드 7-1] PCA 차원 축소 
+위에서 SCTransform 변형한 데이터들을 합쳐주기 위해서 미리 진행한 PCA 를 자세히 들여다보겠습니다. 
 ```{r}
-pbmc_alzheimer_SCT.combinded <- RunPCA(pbmc_alzheimer_SCT.combinded, verbose = FALSE)
+pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = FALSE)
 
-# Idents(pbmc_alzheimer_SCT.combinded) <-  "orig.ident"
+# Idents(pbmc_alzheimer_SCT.combined) <-  "orig.ident"
 # pdf("./results/pca_results.pdf", width = 10)
-print(pbmc_alzheimer_SCT.combinded[["pca"]], dims = 1:10, nfeatures = 5)
-DimPlot(pbmc_alzheimer_SCT.combinded, reduction = "pca") + NoLegend() # 나중에 clustering 한 후에, 해당 색칠해서 확인해보면 어느 pc dimension이 어떤 cell type을 구분할 수 있는지도 보인다. 
-ElbowPlot(pbmc_alzheimer_SCT.combinded, ndims = 30, reduction = 'pca') # -> 20 dimension 사용 예정
-DimHeatmap(pbmc_alzheimer_SCT.combinded, dims = 1:9, cells = 500, balanced = TRUE)
+print(pbmc_alzheimer_SCT.combined[["pca"]], dims = 1:10, nfeatures = 5)
+DimPlot(pbmc_alzheimer_SCT.combined, reduction = "pca") + NoLegend() # 나중에 clustering 한 후에, 해당 색칠해서 확인해보면 어느 pc dimension이 어떤 cell type을 구분할 수 있는지도 보인다. 
+ElbowPlot(pbmc_alzheimer_SCT.combined, ndims = 30, reduction = 'pca') # -> 20 dimension 사용 예정
+DimHeatmap(pbmc_alzheimer_SCT.combined, dims = 1:9, cells = 500, balanced = TRUE)
 # dev.off()
 ```
 
 [코드 7-2] TSNE
 ```{r}
 # TSNE
-pbmc_alzheimer_SCT.combinded <- RunTSNE(pbmc_alzheimer_SCT.combinded, reduction = "pca", dims = 1:20, verbose = FALSE)
+pbmc_alzheimer_SCT.combined <- RunTSNE(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:20, verbose = FALSE)
 ```
 
 [코드 7-3] UMAP
 ```{r}
 # UMAP
-pbmc_alzheimer_SCT.combinded <- RunUMAP(pbmc_alzheimer_SCT.combinded, reduction = "pca", dims = 1:20, verbose = FALSE)
+pbmc_alzheimer_SCT.combined <- RunUMAP(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:20, verbose = FALSE)
 ```
 
 [코드 7-4] 클러스터링 
 ```{r}
-pbmc_alzheimer_SCT.combinded <- FindNeighbors(pbmc_alzheimer_SCT.combinded, reduction = "pca", dims = 1:20)
-pbmc_alzheimer_SCT.combinded <- FindClusters(pbmc_alzheimer_SCT.combinded, resolution = c(0.1,0.3, 0.5))
+pbmc_alzheimer_SCT.combined <- FindNeighbors(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:20)
+pbmc_alzheimer_SCT.combined <- FindClusters(pbmc_alzheimer_SCT.combined, resolution = c(0.1,0.3, 0.5))
 ```
 
 [참고] 차원축소 및 클러스터링 한번에 진행하기 
 ```{r}
-pbmc_alzheimer_SCT.combinded <- RunPCA(pbmc_alzheimer_SCT.combinded, verbose = FALSE) %>%
+pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = FALSE) %>%
   RunUMAP(., reduction = "pca", dims = 1:20, verbose = FALSE) %>%
   FindNeighbors(., reduction = "pca", dims = 1:20) %>% 
   FindClusters(., resolution = c(0.1, 0.3, 0.5))
@@ -383,50 +384,50 @@ pbmc_alzheimer_SCT.combinded <- RunPCA(pbmc_alzheimer_SCT.combinded, verbose = F
 ```{r, fig.width = 15}
 # visualization
 pdf("./results/UMAP_TSNE_integrated_snn_res.0.1_0.3_0.5.pdf", width = 10)
-Idents(pbmc_alzheimer_SCT.combinded) <- "integrated_snn_res.0.1"
-DimPlot(pbmc_alzheimer_SCT.combinded, label = T, label.size = 7, reduction = "umap")
-DimPlot(pbmc_alzheimer_SCT.combinded, label = T, label.size = 7, reduction = "tsne")
+Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.1"
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "umap")
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "tsne")
 
-Idents(pbmc_alzheimer_SCT.combinded) <- "integrated_snn_res.0.3"
-DimPlot(pbmc_alzheimer_SCT.combinded, label = T, label.size = 7, reduction = "umap")
-DimPlot(pbmc_alzheimer_SCT.combinded, label = T, label.size = 7, reduction = "tsne")
+Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.3"
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "umap")
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "tsne")
 
-Idents(pbmc_alzheimer_SCT.combinded) <- "integrated_snn_res.0.5"
-DimPlot(pbmc_alzheimer_SCT.combinded, label = T, label.size = 7, reduction = "umap")
-DimPlot(pbmc_alzheimer_SCT.combinded, label = T, label.size = 7, reduction = "tsne")
+Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.5"
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "umap")
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "tsne")
 dev.off()
 ```
 
 ```{r}
-saveRDS(pbmc_alzheimer_SCT.combinded, "./rds/pbmc_alzheimer_SCT.combinded_2_clustered_2024.rds")
-pbmc_alzheimer_SCT.combinded <- readRDS("./rds/pbmc_alzheimer_SCT.combinded_2_clustered_2024.rds")
+# saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT.combined_2_clustered_2024.rds")
+pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combinded_2_clustered_2024.rds")
 ```
 
 [코드 7-5] 배치 효과 확인하기
 ```{r}
-pdf("./results/UMAP_TSNE_by_run.pdf", width = 10)
-Idents(pbmc_alzheimer_SCT.combinded) <-  pbmc_alzheimer_SCT.combinded@meta.data[["Run"]]
-DimPlot(pbmc_alzheimer_SCT.combinded, label = F, label.size = 7, reduction = "umap")
-DimPlot(pbmc_alzheimer_SCT.combinded, label = F, label.size = 7, reduction = "tsne")
-dev.off()
+# pdf("./results/UMAP_TSNE_by_run.pdf", width = 10)
+Idents(pbmc_alzheimer_SCT.combined) <-  pbmc_alzheimer_SCT.combined@meta.data[["Run"]]
+DimPlot(pbmc_alzheimer_SCT.combined, label = F, label.size = 7, reduction = "umap")
+DimPlot(pbmc_alzheimer_SCT.combined, label = F, label.size = 7, reduction = "tsne")
+# dev.off()
 
-pdf("./results/UMAP_TSNE_by_run_split.pdf", width = 15)
-Idents(pbmc_alzheimer_SCT.combinded) <-  pbmc_alzheimer_SCT.combinded@meta.data[["Run"]]
-DimPlot(pbmc_alzheimer_SCT.combinded, label = F, label.size = 7, reduction = "umap", split.by = "Run")
-DimPlot(pbmc_alzheimer_SCT.combinded, label = F, label.size = 7, reduction = "tsne", split.by = "Run")
-dev.off()
+# pdf("./results/UMAP_TSNE_by_run_split.pdf", width = 15)
+Idents(pbmc_alzheimer_SCT.combined) <-  pbmc_alzheimer_SCT.combined@meta.data[["Run"]]
+DimPlot(pbmc_alzheimer_SCT.combined, label = F, label.size = 7, reduction = "umap", split.by = "Run")
+DimPlot(pbmc_alzheimer_SCT.combined, label = F, label.size = 7, reduction = "tsne", split.by = "Run")
+# dev.off()
 
-pdf("./results/UMAP_TSNE_by_age.pdf", width = 10)
-Idents(pbmc_alzheimer_SCT.combinded) <-  pbmc_alzheimer_SCT.combinded@meta.data[["Age"]]
-DimPlot(pbmc_alzheimer_SCT.combinded, label = F, label.size = 7, reduction = "umap")
-DimPlot(pbmc_alzheimer_SCT.combinded, label = F, label.size = 7, reduction = "tsne")
-dev.off()
+# pdf("./results/UMAP_TSNE_by_age.pdf", width = 10)
+Idents(pbmc_alzheimer_SCT.combined) <-  pbmc_alzheimer_SCT.combined@meta.data[["Age"]]
+DimPlot(pbmc_alzheimer_SCT.combined, label = F, label.size = 7, reduction = "umap")
+DimPlot(pbmc_alzheimer_SCT.combined, label = F, label.size = 7, reduction = "tsne")
+# dev.off()
 
-pdf("./results/UMAP_TSNE_by_age_split.pdf", width = 15)
-Idents(pbmc_alzheimer_SCT.combinded) <-  pbmc_alzheimer_SCT.combinded@meta.data[["Age"]]
-DimPlot(pbmc_alzheimer_SCT.combinded, label = F, label.size = 7, reduction = "umap", split.by = "Age")
-DimPlot(pbmc_alzheimer_SCT.combinded, label = F, label.size = 7, reduction = "tsne", split.by = "Age")
-dev.off()
+# pdf("./results/UMAP_TSNE_by_age_split.pdf", width = 15)
+Idents(pbmc_alzheimer_SCT.combined) <-  pbmc_alzheimer_SCT.combined@meta.data[["Age"]]
+DimPlot(pbmc_alzheimer_SCT.combined, label = F, label.size = 7, reduction = "umap", split.by = "Age")
+DimPlot(pbmc_alzheimer_SCT.combined, label = F, label.size = 7, reduction = "tsne", split.by = "Age")
+# dev.off()
 ```
 
 
@@ -447,12 +448,162 @@ pbmc_alzheimer_2_SCT <- RunPCA(pbmc_alzheimer_2_SCT, npcs = 30, verbose = FALSE)
 
 UMAP
 
+# 08 배치 효과 교정 
+```{r}
+# only integrated PC values are exist not the count dataset 
+dim(pbmc_alzheimer_SCT.combined@reductions$integrated.cca@cell.embeddings)
+pbmc_alzheimer_SCT.combined@reductions$integrated.cca@feature.loadings
+
+pbmc_alzheimer_SCT.combined@assays$integrated@data[1:10, 1:10] # only 2000 features from SCT normalized
+pbmc_alzheimer_SCT.combined@assays$integrated@scale.data[1:10, 1:10] # 좀 다르군 scaling 은 된것같다. 10 max 
+
+summary(pbmc_alzheimer_SCT.combined@assays$integrated@scale.data[1:10, 1:10])
+summary(pbmc_alzheimer_SCT.combined@assays$integrated@data[1:10, 1:10])
+
+pbmc_alzheimer_SCT.combined@assays$SCT
+```
+
+```{r}
+#2024.02.01 try other integration on SCT
+dim(pbmc_alzheimer_SCT.combined@reductions$integrated.cca@cell.embeddings)
+# RNA - counts, data, scaled.data
+# SCT - counts, data, scaled.data
+# Integrated - data, scaled.data
+
+dim(pbmc_alzheimer_SCT.combined@assays$RNA$counts) # 24164, 74134
+dim(pbmc_alzheimer_SCT.combined@assays$SCT@counts) # 21737 74134
+dim(pbmc_alzheimer_SCT.combined@assays$integrated$data) # 2000, 74134
+dim(pbmc_alzheimer_SCT.combined@assays$integrated$scale.data) # 2000, 74134
+identical(pbmc_alzheimer_SCT.combined@assays$integrated$data, pbmc_alzheimer_SCT.combined@assays$integrated$scale.data) # FALSE
+
+pbmc_alzheimer_SCT.combined@assays$SCT@counts[1:5,1:5]
+pbmc_alzheimer_SCT.combined@assays$integrated$data[1:5,1:5]
+pbmc_alzheimer_SCT.combined@assays$integrated$scale.data[1:5,1:5]
+dim(pbmc_alzheimer_SCT.combined@assays$SCT@scale.data) # 2000, 74134
+```
+
+[코드 8-1]
+```{r}
+# options(future.globals.maxSize = 3e+09) 
+# memory.limit(size = NA)
+DefaultAssay(pbmc_alzheimer_SCT.combined) <- "SCT"
+
+# 이거 커서 안돌아감 
+obj_SCT <- IntegrateLayers( 
+  object = pbmc_alzheimer_SCT.combined,
+  method = RPCAIntegration,
+  normalization.method = "SCT",
+  new.reduction = "integrated.rpca", 
+  verbose = F
+)
+```
+
+## After Log normalization 
+```{r}
+obj <- pbmc_alzheimer_SCT.combined
+DefaultAssay(obj) <- "RNA"
+obj <- NormalizeData(obj)
+obj <- FindVariableFeatures(obj)
+obj <- ScaleData(obj)
+obj <- RunPCA(obj) # PC 50 까지 계싼
+
+obj <- IntegrateLayers(object = obj, method = CCAIntegration, orig.reduction = "pca", new.reduction = "integrated.cca")
+# saveRDS(obj, "./rds/RNA_CCA_test.rds")
+obj <- readRDS("./rds/RNA_CCA_test.rds")
+
+
+# 'Run' = 샘플 이름 추가하기 
+obj@meta.data <- obj@meta.data %>%
+  mutate(Run = ifelse(grepl("_1", rownames(.)), "SRR13911909", 
+                              ifelse(grepl("_2", rownames(.)), "SRR13911910",
+                                     ifelse(grepl("_3", rownames(.)), "SRR13911911",
+                                            ifelse(grepl("_4", rownames(.)), "SRR13911912",
+                                                   ifelse(grepl("_5", rownames(.)), "SRR13911913",
+                                                          ifelse(grepl("_6", rownames(.)), "SRR13911914", "NA")))))))
+
+# manifest
+manifest <- read.csv("../singleCell_practice/SraRunTable.txt")
+manifest <- manifest %>% # 필요한 컬럼만 추출해내기 
+  select(c(Run, Age, subject_status))
+
+obj@meta.data[c("Run", "Age", "subject_status")] <-
+  manifest[match(obj$Run, manifest$Run), ]
+```
+
+IntegrateLayers(
+  object,
+  method,
+  orig.reduction = "pca",
+  assay = NULL,
+  features = NULL,
+  layers = NULL,
+  scale.layer = "scale.data",
+  ...
+)
+
+IntegrateLayers() 함수는 PCA 와 scaled.data를 이용합니다. 
+dim(pbmc_alzheimer_SCT.combined@assays$RNA$scale.data) # 2000, 74134
+
+
+
+```{r}
+obj <- FindNeighbors(obj, reduction = "integrated.cca", dims = 1:30)
+obj <- FindClusters(obj, resolution = 2, cluster.name = "cca_clusters")
+obj <- RunUMAP(obj, reduction = "integrated.cca", dims = 1:30, reduction.name = "umap.rna.cca")
+
+DimPlot(
+  obj,
+  reduction = "umap.rna.cca",
+  group.by = c("Age"),
+  combine = FALSE, label.size = 2
+)
+
+DimPlot(
+  obj,
+  reduction = "umap",
+  group.by = c("Age"),
+  combine = FALSE, label.size = 2
+)
+
+
+DimPlot(
+  obj,
+  reduction = "integrated",
+  group.by = c("Age"),
+  combine = FALSE, label.size = 2
+)
+
+```
+Once integrative analysis is complete, you can rejoin the layers - which collapses the individual datasets together and recreates the original counts and data layers. You will need to do this before performing any differential expression analysis. However, you can always resplit the layers in case you would like to reperform integrative analysis.
+https://satijalab.org/seurat/articles/seurat5_integration 
+
+UMAP 상에서 integration 이 된것 같으면 JoinLayers() 함수를 실행해서 실제 카운트를 합쳐 새로운 counts 와 data 레이어를 만들어 낼 수 있습니다. 
+
+```{r}
+DefaultAssay(obj) <- "RNA" # integrated didn't work for IntegrateLayers, SCT also doesn't work 
+obj[["RNA"]] <- JoinLayers(obj[["RNA"]])
+obj[["RNA"]]
+
+pbmc_alzheimer_SCT.combined
+obj
+pbmc_alzheimer_SCT.combined[["RNA"]]
+obj[["RNA"]]
+
+identical(pbmc_alzheimer_SCT.combined[["RNA"]]$scale.data, obj[["RNA"]]$scale.data) # TRUE
+obj[["RNA"]]$data # 24164 x 74134
+obj[["RNA"]]$count # 24164 x 74134
+```
+
+
+
+
+
 
 # Finding DE features 
 ```{r}
 # 마커 찾기
-Idents(pbmc_alzheimer_SCT.combinded) <- "integrated_snn_res.0.3"
-markers <- FindAllMarkers(pbmc_alzheimer_SCT.combinded , only.pos = TRUE) # only positive for now
+Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.3"
+markers <- FindAllMarkers(pbmc_alzheimer_SCT.combined , only.pos = TRUE) # only positive for now
 # saveRDS(markers, "./rds/markers_0.3.rds")
 
 # log2FC 값이 1 이상인 마커 
@@ -546,22 +697,22 @@ ref.data
 
 # singleR 이용해서 
 # sobj_SCE <- as.SingleCellExperiment(sobj_SCT_merged_method_1, assay="SCT")
-sobj_SCE <- as.SingleCellExperiment(pbmc_alzheimer_SCT.combinded, assay="SCT")
+sobj_SCE <- as.SingleCellExperiment(pbmc_alzheimer_SCT.combined, assay="SCT")
 results <- SingleR(test = sobj_SCE, ref = ref.data, labels = ref.data$label.main) 
 results <- SingleR(test = sobj_SCE, ref = ref.data, labels = ref.data$label.main) 
 
 results
 ref.data
 
-pbmc_alzheimer_SCT.combinded$MonacoImmuneData_main <- results$labels
-pbmc_alzheimer_SCT.combinded$MonacoImmuneData_pruned <- results$pruned.labels
+pbmc_alzheimer_SCT.combined$MonacoImmuneData_main <- results$labels
+pbmc_alzheimer_SCT.combined$MonacoImmuneData_pruned <- results$pruned.labels
 
-Idents(pbmc_alzheimer_SCT.combinded) <- pbmc_alzheimer_SCT.combinded$MonacoImmuneData_pruned # or singleR_label
-DimPlot(pbmc_alzheimer_SCT.combinded, label = T, reduction = "umap") 
+Idents(pbmc_alzheimer_SCT.combined) <- pbmc_alzheimer_SCT.combined$MonacoImmuneData_pruned # or singleR_label
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, reduction = "umap") 
 
 # pdf("../singleCell_practice/results/UMAP_manacoimmundata.pdf", width = 10)
-Idents(pbmc_alzheimer_SCT.combinded) <- pbmc_alzheimer_SCT.combinded$MonacoImmuneData_main # or singleR_label 
-DimPlot(pbmc_alzheimer_SCT.combinded, label = T, reduction = "umap") 
+Idents(pbmc_alzheimer_SCT.combined) <- pbmc_alzheimer_SCT.combined$MonacoImmuneData_main # or singleR_label 
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, reduction = "umap") 
 # dev.off()
 ```
 
@@ -578,8 +729,3 @@ scType
 ```{r}
 # library(msm_fit)
 ```
-
-
-
-
-
