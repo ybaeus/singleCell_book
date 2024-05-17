@@ -893,9 +893,3 @@ print(adata) # Note generally in Python, dataset conventions are obs x var
 
 # 챕터 10 단일 세포 데이터 후속 분석 
 ... 일단 dev 에서 진행 
-
-
-
-
-
-
