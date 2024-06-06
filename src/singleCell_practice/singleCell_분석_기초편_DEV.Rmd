@@ -199,25 +199,28 @@ SRR13911912.h5.sobj_norm <- NormalizeData(SRR13911912.h5.sobj)
 SRR13911913.h5.sobj_norm <- NormalizeData(SRR13911913.h5.sobj)
 SRR13911914.h5.sobj_norm <- NormalizeData(SRR13911914.h5.sobj)
 
-# 정규환 된 샘플 별 seurat object들 합쳐주기 
-pbmc_alzheimer_Log_1 <- merge(SRR13911909.h5.sobj_norm, 
+# 정규환 된 슈랏 오브젝트들 합쳐주기 
+pbmc_alzheimer_lognorm_1 <- merge(SRR13911909.h5.sobj_norm, 
                               y = c(SRR13911910.h5.sobj_norm,SRR13911911.h5.sobj_norm,SRR13911912.h5.sobj_norm,SRR13911913.h5.sobj_norm,SRR13911914.h5.sobj_norm),
                               add.cell.ids = c("SRR13911909", "SRR13911910", "SRR13911911", "SRR13911912", "SRR13911913", "SRR13911914"), 
                               project = "pbmc_alzheimer", 
                               merge.data = TRUE)
 
 # 유의미한 유전자 추출하기 (feature selection)
-pbmc_alzheimer_Log_1 <- FindVariableFeatures(pbmc_alzheimer_Log_1, selection.method = "vst", nfeatures = 2000)
-# saveRDS(pbmc_alzheimer_Log_1, "./rds/pbmc_alzheimer_Log_1.rds") #  
+pbmc_alzheimer_lognorm_1 <- FindVariableFeatures(pbmc_alzheimer_lognorm_1, selection.method = "vst", nfeatures = 2000)
+
+
 
 # 스케일링  
-pbmc_alzheimer_Log_1 <- ScaleData(pbmc_alzheimer_Log_1) # features = all.genes
+pbmc_alzheimer_lognorm_1 <- ScaleData(pbmc_alzheimer_lognorm_1) # features = all.genes
 
 # by default scaling only variable features, but we can use all genes
 # all.genes <- rownames(pbmc_alzheimer_Log_1)
 # pbmc_alzheimer_Log_1 <- ScaleData(pbmc_alzheimer_Log_1, features = all.genes)
 ```
-[코드 6-2] 여러 카운트 값 비교하기 
+
+
+[코드 6-4] 여러 카운트 값 비교하기 
 ```{r}
 # raw 데이터 
 pbmc_alzheimer_Log_1[["RNA"]]$counts.1 # 혹은 pbmc_alzheimer_Log_1@assays$RNA$counts.1
@@ -230,25 +233,56 @@ pbmc_alzheimer_Log_1[["RNA"]]$scale.data[1:5, 1:2]
 ```
 
 
-[코드 6-3] 로그 정규화 방법 2
+
+[코드 6-5] 로그 정규화 방법 2
 ```{r}
 # 방법 2 # 
-# 각 seurat object 들 합지기 
-pbmc_alzheimer_Log_2 <- merge(SRR13911909.h5.sobj, y = c(SRR13911910.h5.sobj, SRR13911911.h5.sobj,SRR13911912.h5.sobj,SRR13911913.h5.sobj,SRR13911914.h5.sobj), add.cell.ids = c("SRR13911909", "SRR13911910", "SRR13911911", "SRR13911912", "SRR13911913", "SRR13911914"), project = "pbmc_alzheimer")
+# 각 슈랏 오브젝트들 합지기 
+pbmc_alzheimer_lognorm_2 <- merge(SRR13911909.h5.sobj, y = c(SRR13911910.h5.sobj, SRR13911911.h5.sobj,SRR13911912.h5.sobj,SRR13911913.h5.sobj,SRR13911914.h5.sobj), add.cell.ids = c("SRR13911909", "SRR13911910", "SRR13911911", "SRR13911912", "SRR13911913", "SRR13911914"), project = "pbmc_alzheimer")
 
-# 한번에 로그정규화 진행하기
-pbmc_alzheimer_Log_2 <- NormalizeData(pbmc_alzheimer_Log_2, scale.factor = 10000)
+# 한번에 로그정규화 진행하기 
+pbmc_alzheimer_lognorm_2 <- NormalizeData(pbmc_alzheimer_lognorm_2, scale.factor = 10000)
+## Q. 이때도, 각 count 를 따로 Normalize 해주는데 위에 방법이랑 뭐가 다를까? 
 
 # 유의미한 유전자 추출하기 (feature selection)
-pbmc_alzheimer_Log_2 <- FindVariableFeatures(pbmc_alzheimer_Log_2, selection.method = "vst", nfeatures = 2000)
+pbmc_alzheimer_lognorm_2 <- FindVariableFeatures(pbmc_alzheimer_lognorm_2, selection.method = "vst", nfeatures = 2000)
 
 # 스케일링
-pbmc_alzheimer_Log_2 <- ScaleData(pbmc_alzheimer_Log_2)
+pbmc_alzheimer_lognorm_2 <- ScaleData(pbmc_alzheimer_lognorm_2)
 ```
+```{r}
+identical(pbmc_alzheimer_lognorm_2@assays$RNA@layers$data.2, pbmc_alzheimer_lognorm_1@assays$RNA@layers$data.2) # TRUE
+identical(pbmc_alzheimer_lognorm_2@assays$RNA@layers$scale.data, pbmc_alzheimer_lognorm_1@assays$RNA@layers$scale.data) # TRUE
+```
+
+JoinLayers?? which collapses the individual datasets together and recreates the original counts and data layers.
+https://satijalab.org/seurat/articles/seurat5_integration.html
+```{r}
+pbmc_alzheimer_lognorm_1_joined <- JoinLayers(pbmc_alzheimer_lognorm_1)
+```
+
+[코드 6-6] 다시.... 새로운 코드 (2024.04.20)
+```{r}
+lognorm_list <- lapply(c(SRR13911909.h5.sobj, SRR13911910.h5.sobj, SRR13911911.h5.sobj,
+                      SRR13911912.h5.sobj,SRR13911913.h5.sobj,SRR13911914.h5.sobj), function(x) {
+  x <- NormalizeData(x)
+  x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 2000)
+})
+features <- SelectIntegrationFeatures(object.list = lognorm_list, nfeatures=10000)
+lognorm_anchors <- FindIntegrationAnchors(object.list = lognorm_list, anchor.features = features)
+lognorm_combined <- IntegrateData(anchorset = lognorm_anchors)
+DefaultAssay(lognorm_combined) <- "integrated"
+lognorm_combined <- ScaleData(lognorm_combined, verbose = FALSE)
+lognorm_combined <- RunPCA(lognorm_combined, npcs = 30, verbose = FALSE)
+lognorm_combined <- RunUMAP(CB30_combined, reduction = "pca", dims = 1:30)
+lognorm_combined <- FindNeighbors(lognorm_combined, dims = 1:30)
+lognorm_combined <- FindClusters(lognorm_combined, resolution = 0.8)
+```
+
 Question - Log normalization 한 후 Integration? 
 
 ```{r}
-# 2024 to demo merged without integration -> batch effect 
+# 2024 to demo merged without integration -> to see batch effect 
 pbmc_alzheimer_Log_2 <- merge(SRR13911909.h5.sobj, y = c(SRR13911910.h5.sobj, SRR13911911.h5.sobj,SRR13911912.h5.sobj,SRR13911913.h5.sobj,SRR13911914.h5.sobj), add.cell.ids = c("SRR13911909", "SRR13911910", "SRR13911911", "SRR13911912", "SRR13911913", "SRR13911914"), project = "pbmc_alzheimer")
 
 
@@ -315,7 +349,9 @@ SRR13911913.h5.sobj_SCT <- SCTransform(SRR13911913.h5.sobj, vars.to.regress = "p
 SRR13911914.h5.sobj_SCT <- SCTransform(SRR13911914.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) %>%
     RunPCA(npcs = 30, verbose = FALSE)
 
+
 # 여러 seurat object 를 하나의 리스트로 묶기 
+## TODO:굳이 이름 주어야하나
 pbmc_alzheimer_SCT.list <- list(SRR13911909.h5.sobj_SCT = SRR13911909.h5.sobj_SCT, SRR13911910.h5.sobj_SCT = SRR13911910.h5.sobj_SCT,
                   SRR13911911.h5.sobj_SCT = SRR13911911.h5.sobj_SCT, SRR13911912.h5.sobj_SCT = SRR13911912.h5.sobj_SCT,
                   SRR13911913.h5.sobj_SCT = SRR13911913.h5.sobj_SCT , SRR13911914.h5.sobj_SCT = SRR13911914.h5.sobj_SCT)
@@ -326,16 +362,17 @@ pbmc_alzheimer_SCT.list <- list(SRR13911909.h5.sobj_SCT = SRR13911909.h5.sobj_SC
 
 # 정규화 된 seurat object 합치기 
 features <- SelectIntegrationFeatures(object.list = pbmc_alzheimer_SCT.list, nfeatures = 3000) 
-pbmc_alzheimer_SCT.list <- PrepSCTIntegration(object.list = pbmc_alzheimer_SCT.list, anchor.features = features)
+pbmc_alzheimer_SCT.list <- PrepSCTIntegration(object.list = pbmc_alzheimer_SCT.list, anchor.features = features) ## TODO 이게 뭐하는건지 확인 
 
 # 샘플 간의 앵커 찾기
 pbmc_alzheimer_SCT.anchors <- FindIntegrationAnchors(object.list = pbmc_alzheimer_SCT.list, 
                                                      normalization.method = "SCT", 
-                                                     anchor.features = features)
-pbmc_alzheimer_SCT.combined <- IntegrateData(anchorset = pbmc_alzheimer_SCT.anchors, normalization.method = "SCT") # 메모리가 부족하면 (64GB 미만) 터질 수 있습니다.
-
-job::job({saveRDS(pbmc_alzheimer_SCT.anchors, "./rds/pbmc_alzheimer_SCT.anchors.rds")
-saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT.combined_1.rds")})
+                                                     anchor.features = features,
+                                                     reduction = "cca") # TODO: PCA 안돌렸는데도 돌아가네..????? Anchor를어떻게 찾는거지? 
+pbmc_alzheimer_SCT.combined <- IntegrateData(anchorset = pbmc_alzheimer_SCT.anchors, 
+                                             normalization.method = "SCT") # 메모리가 부족하면 (64GB 미만) 터질 수 있습니다.
+# saveRDS(pbmc_alzheimer_SCT.anchors, "./rds/pbmc_alzheimer_SCT.anchors.rds")
+# saveRDS(pbmc_alzheimer_SCT.combined, "./rds/sobj_SCT_merged_method.rds")
 ```
 
 ```{r}
@@ -563,6 +600,7 @@ UMAP
 ```{r}
 pbmc_alzheimer_SCT.combined <- readRDS("./pbmc_alzheimer_SCT.combinded_2_clustered_2024.rds")
 ```
+
 ```{r}
 # only integrated PC values are exist not the count dataset 
 dim(pbmc_alzheimer_SCT.combined@reductions$integrated.cca@cell.embeddings)
@@ -595,6 +633,22 @@ pbmc_alzheimer_SCT.combined@assays$integrated$data[1:5,1:5]
 pbmc_alzheimer_SCT.combined@assays$integrated$scale.data[1:5,1:5]
 dim(pbmc_alzheimer_SCT.combined@assays$SCT@scale.data) # 2000, 74134
 ```
+
+```{r}
+# SCTransform object -> merge -> dimensionreduction
+# SCT_merged <- FindVariableFeatures(SCT_merged) # 안됨 features 이용
+# SCT_merged@assays$SCT@SCTModel.list
+# features <- SelectIntegrationFeatures(object.list = SCT_merged, nfeatures = 3000)
+
+VariableFeatures(SCT_merged) <- features
+
+SCT_merged <- RunPCA(SCT_merged, verbose = FALSE) %>%
+  RunUMAP(., reduction = "pca", dims = 1:20, verbose = FALSE) %>%
+  RunTSNE(., reduction = "pca", dims = 1:20, verbose = FALSE) %>%
+  FindNeighbors(., reduction = "pca", dims = 1:20) %>% 
+  FindClusters(., resolution = c(0.1, 0.3, 0.5))
+```
+
 
 [코드 8-1]
 ```{r}
@@ -750,8 +804,6 @@ pbmc_alzheimer_SCT.anchors <- readRDS("./rds/pbmc_alzheimer_SCT.anchors.rds")
 
 pbmc_alzheimer_SCT.combined <- IntegrateData(anchorset = pbmc_alzheimer_SCT.anchors, normalization.method = "SCT") # 메모리가 부족하면 (64GB 미만) 터질 수 있습니다.
 # saveRDS(pbmc_alzheimer_SCT.combined, "./rds/sobj_SCT_merged_method.rds")
-
-
 ```
 
 ```{r}
@@ -1057,7 +1109,108 @@ saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT.combinded_2_clust
 
 
 # 챕터 10 단일 세포 데이터 후속 분석 
-1. control vs case 
+
+[코드 10-1] 그룹간 차등 유전자 발현(DEG) 분석 실행하기 
+```{r}
+# DefaultAssay(pbmc_alzheimer_SCT.combined) <- "integrated"
+Idents(pbmc_alzheimer_SCT.combined) <- "subject_status"
+degs_severeADvsnormal <- FindMarkers(pbmc_alzheimer_SCT.combined, ident.1 = "patient with severe AD", ident.2 = "normal individual", only.pos = FALSE)
+degs_mildADvsnormal <- FindMarkers(pbmc_alzheimer_SCT.combined, ident.1 = "patient with mild AD", ident.2 = "normal individual", only.pos = FALSE)
+# saveRDS(degs_mildADvsnormal, "./rds/degs_mildADvsnormal.rds")
+# saveRDS(degs_severeADvsnormal, "./rds/degs_severeADvsnormal.rds")
+
+# avg_log2FC 값으로 내림차순 정렬하기
+degs_severeADvsnormal <- degs_severeADvsnormal %>%
+  arrange(-(avg_log2FC))
+degs_mildADvsnormal <- degs_mildADvsnormal %>%
+  arrange(-(avg_log2FC))
+```
+[코드 10-2] 데이터 프레임 csv 형태로 저장하기  
+```{r}
+write.csv(degs_severeADvsnormal, "../results/all_degs_severeADvsnormal.csv", row.names=F) 
+write.csv(degs_mildADvsnormal, "../results/all_degs_mildADvsnormal.csv", row.names=F) 
+```
+
+[코드 10-3] 세포 유형별 차등 유전자 발현(DEG) 분석 실행하기 
+```{r}
+# 세포 유형별 차등 유전자 발현(DEG) 분석 함수 
+run_DEGs_per_celltype <- function(seurat_obj, celltype){
+  
+  # 특정 세포 유형으로만 이루어진 슈랏 오브젝트 부분 추출하기 
+  sobj_sub <- subset(x = seurat_obj, subset = cell_type == celltype)
+  
+  # 특정 세포 유형에서 차등 발현 유전자 구하기 
+  Idents(sobj_sub) <- "subject_status"
+  ## 중증 환자 vs 일반인 
+  degs_severeADvsnormal <- FindMarkers(seurat_obj, ident.1 = "patient with severe AD", ident.2 = "normal individual", only.pos = FALSE)
+  ## 경증 환자 vs 일반인 
+  degs_mildADvsnormal <- FindMarkers(seurat_obj, ident.1 = "patient with mild AD", ident.2 = "normal individual", only.pos = FALSE)
+  
+  # avg_log2FC 값으로 내림차순 정렬하기 
+  degs_severeADvsnormal <- degs_severeADvsnormal %>% 
+    arrange(-(avg_log2FC)) 
+  degs_mildADvsnormal <- degs_mildADvsnormal %>% 
+    arrange(-(avg_log2FC)) 
+  
+  # 차등 발현 유전자 csv 로 저장하기 
+  write.csv(degs_severeADvsnormal, glue::glue( "./results/{celltype}_degs_severeADvsnormal.csv"), row.names = T)
+  write.csv(degs_mildADvsnormal, glue::glue( "./results/{celltype}_degs_mildADvsnormal.csv"), row.names = T )
+  
+  return(sobj_sub)
+}
+
+# 각 세포유형 마다 실행하기 
+sobj_sebsets_list <- list()
+for (celltype in unique(pbmc_alzheimer_SCT.combined$cell_type)){
+  print(glue::glue("### {celltype} is processing ... "))
+  sobj_subset <- run_DEGs_per_celltype(pbmc_alzheimer_SCT.combined, celltype)
+  
+  # 부분 추출 된 슈랏 오브젝트들을 리스트에 추가하기  
+  sobj_sebsets_list[[celltype]] <- sobj_subset
+}
+
+# 후속 분속에 이용하기 위하여 저장하기 
+saveRDS(sobj_sebsets_list, "./rds/sobj_sebsets_list.rds")
+```
+
+[코드 10-4] b 세포의 차등 발현 유전자 데이터 확인하기 
+```{r}
+# b 세포의 차등 발현 유전자 데이터 확인하기 
+degs_bcell <- read.csv("./results/B_cell_degs_severeADvsnormal.csv", stringsAsFactors = FALSE)
+
+# 상향 조절 유전자 들여다보기 
+degs_bcell %>% 
+  filter(avg_log2FC > 0)
+
+# 하양 조절 유전자 들여다보기 
+degs_bcell %>% 
+  filter(avg_log2FC < 0)
+```
+
+[코드 10-5] B 세포의 차등 발현 유전자 발현 패턴 시각화: 히트맵 
+```{r, fig.width = 10}
+DoHeatmap(pbmc_alzheimer_SCT.combined, features = degs_bcell$X[1:50]) + noLegend() 
+DoHeatmap(sobj_sebsets_list$B_cell, features = degs_bcell$X[1:50])
+```
+
+[코드 10-6] b 세포에서의 차등 발현 유전자 박스 플롯 그리기 
+```{r}
+
+```
+
+
+
+
+```{r}
+# DefaultAssay(pbmc_alzheimer_SCT.combined) <- "integrated"
+# Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.3"
+# pbmc_alzheimer_SCT.combined <- PrepSCTFindMarkers(object = pbmc_alzheimer_SCT.combined)
+# markers <- FindAllMarkers(pbmc_alzheimer_SCT.combined , only.pos = TRUE)
+
+# markers2 <- FindAllMarkers(pbmc_alzheimer_SCT.combined, only.pos = FALSE)
+# saveRDS(markers2, "./rds/markers2.rds") # including neg and pos DEGs
+```
+
 
 
 
