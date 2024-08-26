@@ -6,3 +6,6 @@ for i in "${SRR[@]}"; do
     echo "Downloading Sample: $i" 
     fasterq-dump ${i} -O ${i}/ 
 done
+
+
+
