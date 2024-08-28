@@ -1,11 +1,11 @@
 ---
 title: "singleCell_분석_기초"
 author: "yeji Bae"
-date: "2023-10-10"
+date: "2024-08-03"
 output: html_document
 ---
 
-2023.04.26 복사본. -> 2024.04.27 수정 
+2023.04.26 복사본. -> 2024.04.27 수정 -> 2024.08.03 cellranger 8.0.0 + seurat v5 
 
 해당 스크립트는 "실전 단일세포 데이터 분석: 예제 코드와 데이터로 배우는 생물정보 분석 기술" 책에서 따라 할 수 있도록 제작된 실습 스크립트 '기초편' 입니다. 
 
@@ -20,7 +20,7 @@ Question: R script or Rmd script?
 ```{r setup, include=FALSE} 
 # 작업 디렉토리 설정
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file()) 
-# setwd("/Users/ybae/Desktop/YJ/singleCell_book/src/singleCell_practice/")
+setwd("/active/taylor_s/people/ybae/RSC/singleCell_book/src")
 ```
 
 # 데이터 설명 
@@ -34,28 +34,30 @@ TODO: 데이터 구조 설명
 코드를 하이라이트 한 뒤 위쪽 'Run' 버튼을 클릭하거나 command + return 단축키를 이용해서 실행시킬 수 있습니다. 코드 블록 ```{r}``` 에 포함되는 코드들은 해당 블록의 삼각형 버튼을 클릭하면 한번에 실행됩니다. 
 TODO: window 단축키? 
 
-# 챕터 5  "Seurat Object 만들기, 품질관리 및 필터링"
-## 챕터 5.1 "Seurat Object 만들기"
+# 챕터 5  슈랏 오브젝트, 품질관리 및 필터링"
+## 챕터 5.1 슈랏 오브젝트 만들기 
 [코드 5-1] 필요한 패키지 설치 및 불러오기
 ```{r}
-# 필요한 패키지 설치하기 
-install.packages("Seurat")
-install.packages("dplyr")
+# 필요한 패키지 설치  
+install.packages("Seurat") 
+install.packages("dplyr") 
+install.packages("hdf5r")
 
-# 필요한 패키지 불러오기 
-library(Seurat)
-library(dplyr)
+# 패키지 불러오기  
+library(Seurat) 
+library(dplyr) 
+library(hdf5r)
 ```
 
 [코드 5-2] 2가지 방법으로 슈랏 오브젝트 생성하기
 ```{r}
 # [1] h5 파일 이용하기
-count_SRR13911909.h5 <- Read10X_h5("../results/count_SRR13911909/outs/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
-SRR13911909.h5.sobj <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer")
+count_SRR13911909.h5 <- Read10X_h5("../data/count_SRR13911909/outs/filtered_feature_bc_matrix.h5")
+SRR13911909.h5.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer")
 
 # [2] Market Exchange Format(MEX) 구조 폴더 이용하기 
-count_SRR13911909 <- Read10X(data.dir =  "../results/count_SRR13911909/outs/filtered_feature_bc_matrix/" )
-SRR13911909.sobj <- CreateSeuratObject(counts = count_SRR13911909, project = "pbmc_alzheimer")
+count_SRR13911909 <- Read10X(data.dir =  "../data/count_SRR13911909/outs/filtered_feature_bc_matrix/")
+SRR13911909.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909, project = "pbmc_alzheimer")
 ```
 
 (참고)[코드 5-3] 슈랏 오브젝트 생성 두 가지 방법의 시간 비교해보기  
@@ -63,37 +65,36 @@ SRR13911909.sobj <- CreateSeuratObject(counts = count_SRR13911909, project = "pb
 ```{r}
 # [1] h5 파일 이용하기
 start <- Sys.time() # 시작 시간 
-SRR13911909.h5 <- Read10X_h5("../results/count_SRR13911909/outs/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
-SRR13911909.h5.sobj_ori <- CreateSeuratObject(counts = SRR13911909.h5, project = "pbmc_alzheimer")
-print( Sys.time() - start ) # 현재 시간 – 시작 시간 = 총 걸린 시간
+count_SRR13911909.h5 <- Read10X_h5("../data/count_SRR13911909/outs/filtered_feature_bc_matrix.h5")
+SRR13911909.h5.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer")
+print( Sys.time() - start ) # 현재 시간 – 시작 시간 = 총 걸린 시간 (4.866736 secs)
 
 # [2] Market Exchange Format(MEX) 구조 폴더 이용하기  
 start <- Sys.time()
-SRR13911909 <- Read10X(data.dir = "../results/count_SRR13911909/outs/filtered_feature_bc_matrix/")
-SRR13911909.sobj_ori <- CreateSeuratObject(counts = SRR13911909, project = "pbmc_alzheimer")
+count_SRR13911909 <- Read10X(data.dir = "../data/count_SRR13911909/outs/filtered_feature_bc_matrix/")
+SRR13911909.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909, project = "pbmc_alzheimer")
 print( Sys.time() - start )
 ```
 
-[코드 5-4] 모든 샘플을 슈랏 오브젝트로 변형하기
-TODO: 새로운 library 환경에서 시도해보기 ( Question library(hdf5r) 설치 필요할수도 있을 것 같습니다. scratch 부터 시작했을때 설치 요구했습니다. ) 
+[코드 5-4] 모든 샘플을 슈랏 오브젝트로 변형하기 (최소 발현량, 발현 세포 임계값)
 ```{r}
 # 각 샘플의 카운트 메트릭스를 슈랏 오브젝트로 변환하기
-count_SRR13911909.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911909.h5", use.names = TRUE, unique.features = TRUE)
+count_SRR13911909.h5 <- Read10X_h5("../data/count_SRR13911909/outs/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
 SRR13911909.h5.sobj <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 
-count_SRR13911910.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911910.h5", use.names = TRUE, unique.features = TRUE)
+count_SRR13911910.h5 <- Read10X_h5("../data/count_SRR13911910/outs/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
 SRR13911910.h5.sobj <- CreateSeuratObject(counts = count_SRR13911910.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 
-count_SRR13911911.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911911.h5", use.names = TRUE, unique.features = TRUE)
+count_SRR13911911.h5 <- Read10X_h5("../data/count_SRR13911911/outs/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
 SRR13911911.h5.sobj <- CreateSeuratObject(counts = count_SRR13911911.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 
-count_SRR13911912.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911912.h5", use.names = TRUE, unique.features = TRUE)
+count_SRR13911912.h5 <- Read10X_h5("../data/count_SRR13911912/outs/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
 SRR13911912.h5.sobj <- CreateSeuratObject(counts = count_SRR13911912.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 
-count_SRR13911913.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911913.h5", use.names = TRUE, unique.features = TRUE)
+count_SRR13911913.h5 <- Read10X_h5("../data/count_SRR13911913/outs/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
 SRR13911913.h5.sobj <- CreateSeuratObject(counts = count_SRR13911913.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 
-count_SRR13911914.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911914.h5", use.names = TRUE, unique.features = TRUE)
+count_SRR13911914.h5 <- Read10X_h5("../data/count_SRR13911914/outs/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
 SRR13911914.h5.sobj <- CreateSeuratObject(counts = count_SRR13911914.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 ```
 
@@ -104,18 +105,19 @@ SRR13911914.h5.sobj <- CreateSeuratObject(counts = count_SRR13911914.h5, project
 install.packages("stringr")
 library(stringr)
 # results 파일에 있는 폴더들의 경로 얻기  
-all_samples <- dir("./singleCell/results", full.names = TRUE)
+all_samples <- dir("../data/", full.names = TRUE)
 # 경로/filtered_feature_bc_matrix.h5 
 all_samples_h5 <- paste0(all_samples, "/outs/filtered_feature_bc_matrix.h5") 
 # h5파일 경로와, 샘플 이름을 갖는 데이터프레임 생성
 sample_manifest <- as.data.frame(all_samples_h5) %>% 
     mutate(sample_name = str_extract(all_samples_h5, "SRR\\d+")) 
 # 빈 리스트 생성 
-all_seurat_objects <- list() 
+seurat_objects_list <- list() 
 # for 함수를 이용해서 all_seurat_objects 리스트에 각 샘플을 seurat object 형태로 저장
 for(sample in sample_manifest$sample_name){ 
-    seurat_obj <- Read10X_h5(glue::glue("./singleCell/results/count_{sample}/outs/filtered_feature_bc_matrix.h5"), use.names = TRUE, unique.features = TRUE)
-    all_seurat_objects[[sample]] <- seurat_obj
+    count <- Read10X_h5(glue::glue("../data/count_{sample}/outs/filtered_feature_bc_matrix.h5"), use.names = TRUE, unique.features = TRUE)
+    seurat_obj <- CreateSeuratObject(counts = count, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
+    seurat_objects_list[[sample]] <- seurat_obj
 }
 ```
 
@@ -126,7 +128,7 @@ for(sample in sample_manifest$sample_name){
 SRR13911909.h5.sobj
 
 # 슈랏 오브젝트 메인 크기 확인하기
-dim(SRR13911909.h5.sobj) # feature (gene) x cell 크기 
+dim(SRR13911909.h5.sobj)            # feature (gene) x cell 크기 
 colnames(SRR13911909.h5.sobj)[1:10] # cell barcode 첫 10개
 rownames(SRR13911909.h5.sobj)[1:10] # feature (gene) name 첫 10개
 
@@ -139,17 +141,17 @@ SRR13911909.h5.sobj@assays$RNA
 SRR13911909.h5.sobj[["RNA"]]
 
 # 레이어 (카운트) 데이터 확인하기 
-SRR13911909.h5.sobj@assays$RNA@layers$counts # 열과 행 포함
-SRR13911909.h5.sobj@assays$RNA$counts # 카운트 값만 포함 
+# 카운트 값만 포함 
+SRR13911909.h5.sobj@assays$RNA@layers$counts
 SRR13911909.h5.sobj[["RNA"]]@layers$counts
+# 열과 행 포함 
+SRR13911909.h5.sobj@assays$RNA$counts 
 SRR13911909.h5.sobj[["RNA"]]$counts
 
-# other: 슈랏 오브젝트 뒤에 @ 혹은 $을 입력 한 후 'tab'을 눌러서 어떤 데이터를 불러 올 수 있는지 확인해 보세요. 
+# other: 슈랏 오브젝트 뒤에 @ 혹은 $을 입력 한 후 'tab'을 눌러서 어떤 데이터를 불러 올 수 있는지 확인해 보세요.
 ```
 
-## 챕터 5.2 '품질관리(QC) 및 필터링'
-먼저 SRR13911909 샘플을 이용해서 코드를 이해하고, 코드 [5-] 부터 모든 샘플에 적용하겠습니다. 
-
+## 챕터 5.2 품질관리(QC) 및 필터링
 [코드 5-7] SRR13911909 슈랏 오브젝트에 미토콘드리아 발현 비율 추가하기
 ```{r}
 SRR13911909.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911909.h5.sobj, pattern = "^MT-")
@@ -161,7 +163,7 @@ VlnPlot(SRR13911909.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent
 ```
 
 [코드 5-9] SRR13911909 슈랏 오브젝트의 품질관리 유전자 산포도 플롯 그리기
-```{r}
+```{r, fig.width = 6, fig.height= 6}
 # 세포당 RNA 카운트와 발현된 고유 유전자 수의 상관 관계
 FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 # 세포당 RNA 카운트와 미토콘드리아 발현 비율 상관 관계
@@ -170,13 +172,13 @@ FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent
 
 [코드 5-10] SRR13911909 슈랏 오브젝트 필터링하기
 ```{r}
-SRR13911909.h5.sobj <- subset(SRR13911909.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
+SRR13911909.h5.sobj <- subset(SRR13911909.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3500 & percent.mt < 10)
 ```
 
-[코드 5-11] 필터링된 SRR13911909 슈랏 오브젝트의 품질관리 플롯 그리기
-```{r}
+[코드 5-11] 필터링된 SRR13911909 슈랏 오브젝트의 품질 관리 플롯 그리기
+```{r, fig.width=6, fig.height=6}
 # 바이올린 플롯
-SRR13911909.h5.sobj <- subset(SRR13911909.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
+VlnPlot(SRR13911909.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)	
 
 # 유전자 산포도 플롯
 FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
@@ -193,7 +195,7 @@ SRR13911913.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911913.h5.sobj,
 SRR13911914.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911914.h5.sobj, pattern = "^MT-")
 ```
 
-[코드 5-13] QC 플롯 시각화 하기 – 바이올린 플롯 
+[코드 5-13] QC 시각화 하기 – 바이올린 플롯 
 ```{r}
 VlnPlot(SRR13911909.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
 VlnPlot(SRR13911910.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
@@ -203,14 +205,13 @@ VlnPlot(SRR13911913.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent
 VlnPlot(SRR13911914.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
 ```
 
-[코드 5-14] QC 플롯 시각화 하기 – 유전자 산포도 
-```{r}
+[코드 5-14] QC 시각화 하기 – 유전자 산포도 
+```{r, fig.width = 6, fig.height= 6}
 # 세포당 RNA 카운트와 발현된 고유 유전자 수의 상관 관계  
-FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
-# 세포당 RNA 카운트와 미토콘드리아 발현 비율 상관 관계
-FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent.mt")
 FeatureScatter(SRR13911910.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+# 세포당 RNA 카운트와 미토콘드리아 발현 비율 상관 관계
 FeatureScatter(SRR13911910.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent.mt")
+
 FeatureScatter(SRR13911911.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 FeatureScatter(SRR13911911.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent.mt")
 FeatureScatter(SRR13911912.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
@@ -224,76 +225,82 @@ FeatureScatter(SRR13911914.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent
 [코드 5-15] 각 샘플들의 품질관리 플롯들을 이용해서 필터링하기 
 ```{r}
 # 필터링 
-SRR13911909.h5.sobj <- subset(SRR13911909.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)  
-SRR13911910.h5.sobj <- subset(SRR13911910.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
-SRR13911911.h5.sobj <- subset(SRR13911911.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
-SRR13911912.h5.sobj <- subset(SRR13911912.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
-SRR13911913.h5.sobj <- subset(SRR13911913.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
-SRR13911914.h5.sobj <- subset(SRR13911914.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
+SRR13911909.h5.sobj <- subset(SRR13911909.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3500 & percent.mt < 10)  
+SRR13911910.h5.sobj <- subset(SRR13911910.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3500 & percent.mt < 10)
+SRR13911911.h5.sobj <- subset(SRR13911911.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3500 & percent.mt < 10)
+SRR13911912.h5.sobj <- subset(SRR13911912.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3500 & percent.mt < 10)
+SRR13911913.h5.sobj <- subset(SRR13911913.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3500 & percent.mt < 10)
+SRR13911914.h5.sobj <- subset(SRR13911914.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3500 & percent.mt < 10)
 ```
 
-(예시) 필터링 된 데이터의 품질관리 플롯 그려보기 
+(예시) 필터링 된 데이터의 품질관리 플롯 그려보기 (삭제?)
 ```{r, fig.width = 10}
 # 예시 - SRR13911909.h5.sobj
 VlnPlot(SRR13911909.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
 FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent.mt")
 FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+```
 
-# Task: 다른 샘플들의 QC 플롯들도 그려보세요. (아래 테스트 삭제 해야함)
-# count_SRR13911909.h5 <- Read10X_h5("./filtered_feature_bc_matrix_SRR13911909.h5", use.names = TRUE, unique.features = TRUE)
-# SRR13911909.h5.sobj <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
-# SRR13911909.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911909.h5.sobj, pattern = "^MT-")
-# SRR13911909.h5.sobj <- subset(SRR13911909.h5.sobj, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)  
-# VlnPlot(SRR13911909.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
-# FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent.mt")
-# FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+(심화) [코드 5-16] lapply를 이용하여 한번에 슈랏 오브젝트 리스트 품질관리 및 필터링하기
+```{r}
+seurat_objects_list <- lapply(seurat_objects_list, function(sobj) {  
+    sobj <- sobj %>%  
+        PercentageFeatureSet(pattern = "^MT-", col.name = "percent.mt") %>%  
+        subset(subset = nFeature_RNA > 200 & nFeature_RNA < 3500 & percent.mt < 10) 
+}) 
 ```
 
 
-
-# 챕터 6 "데이터 정규화 및 통합"
+# 챕터 6 데이터 정규화 및 통합
 ## 챕터 6.1 로그정규화 이용 
 [코드 6-1] 로그 정규화 실행하기
 _NormalizeData()_: https://satijalab.org/seurat/reference/normalizedata 
 ```{r}
-SRR13911909.h5.sobj_norm <- NormalizeData(SRR13911909.h5.sobj) 
-SRR13911910.h5.sobj_norm <- NormalizeData(SRR13911910.h5.sobj)
-SRR13911911.h5.sobj_norm <- NormalizeData(SRR13911911.h5.sobj)
-SRR13911912.h5.sobj_norm <- NormalizeData(SRR13911912.h5.sobj)
-SRR13911913.h5.sobj_norm <- NormalizeData(SRR13911913.h5.sobj)
-SRR13911914.h5.sobj_norm <- NormalizeData(SRR13911914.h5.sobj)
+SRR13911909.h5.sobj_norm <- NormalizeData(SRR13911909.h5.sobj, verbose = TRUE) 
+SRR13911910.h5.sobj_norm <- NormalizeData(SRR13911910.h5.sobj, verbose = FALSE)
+SRR13911911.h5.sobj_norm <- NormalizeData(SRR13911911.h5.sobj, verbose = FALSE)
+SRR13911912.h5.sobj_norm <- NormalizeData(SRR13911912.h5.sobj, verbose = FALSE)
+SRR13911913.h5.sobj_norm <- NormalizeData(SRR13911913.h5.sobj, verbose = FALSE)
+SRR13911914.h5.sobj_norm <- NormalizeData(SRR13911914.h5.sobj, verbose = FALSE)
 ```
 
 [코드 6-2] 유의미한 유전자 추출하기
 ```{r}
-SRR13911909.h5.sobj_norm <- FindVariableFeatures(SRR13911909.h5.sobj_norm, selection.method = "vst", nfeatures = 2000)
-SRR13911910.h5.sobj_norm <- FindVariableFeatures(SRR13911910.h5.sobj_norm, selection.method = "vst", nfeatures = 2000)
-SRR13911911.h5.sobj_norm <- FindVariableFeatures(SRR13911911.h5.sobj_norm, selection.method = "vst", nfeatures = 2000)
-SRR13911912.h5.sobj_norm <- FindVariableFeatures(SRR13911912.h5.sobj_norm, selection.method = "vst", nfeatures = 2000)
-SRR13911913.h5.sobj_norm <- FindVariableFeatures(SRR13911913.h5.sobj_norm, selection.method = "vst", nfeatures = 2000)
-SRR13911914.h5.sobj_norm <- FindVariableFeatures(SRR13911914.h5.sobj_norm, selection.method = "vst", nfeatures = 2000)
+SRR13911909.h5.sobj_norm <- FindVariableFeatures(SRR13911909.h5.sobj_norm, selection.method = "vst", nfeatures = 2000, verbose = TRUE)
+SRR13911910.h5.sobj_norm <- FindVariableFeatures(SRR13911910.h5.sobj_norm, selection.method = "vst", nfeatures = 2000, verbose = FALSE)
+SRR13911911.h5.sobj_norm <- FindVariableFeatures(SRR13911911.h5.sobj_norm, selection.method = "vst", nfeatures = 2000, verbose = FALSE)
+SRR13911912.h5.sobj_norm <- FindVariableFeatures(SRR13911912.h5.sobj_norm, selection.method = "vst", nfeatures = 2000, verbose = FALSE)
+SRR13911913.h5.sobj_norm <- FindVariableFeatures(SRR13911913.h5.sobj_norm, selection.method = "vst", nfeatures = 2000, verbose = FALSE)
+SRR13911914.h5.sobj_norm <- FindVariableFeatures(SRR13911914.h5.sobj_norm, selection.method = "vst", nfeatures = 2000, verbose = FALSE)
 
 # 유의미한 유전자 확인하기 예시
 VariableFeatures(SRR13911909.h5.sobj_norm)
 ```
 
-[코드 6-3] 정규화된 슈랏 오브젝트들 하나의 리스트로 묶기 
+[코드 6-3] 스케일링 
+```{r}
+SRR13911909.h5.sobj_norm <- ScaleData(SRR13911909.h5.sobj_norm, verbose = TRUE) 
+SRR13911910.h5.sobj_norm <- ScaleData(SRR13911910.h5.sobj_norm, verbose = FALSE)
+SRR13911911.h5.sobj_norm <- ScaleData(SRR13911911.h5.sobj_norm, verbose = FALSE)
+SRR13911912.h5.sobj_norm <- ScaleData(SRR13911912.h5.sobj_norm, verbose = FALSE)
+SRR13911913.h5.sobj_norm <- ScaleData(SRR13911913.h5.sobj_norm, verbose = FALSE)
+SRR13911914.h5.sobj_norm <- ScaleData(SRR13911914.h5.sobj_norm, verbose = FALSE)
+```
+[코드 6-4] 정규화된 슈랏 오브젝트들 하나의 리스트로 묶기 
 ```{r}
 lognorm_list <- c(SRR13911909.h5.sobj_norm, SRR13911910.h5.sobj_norm, SRR13911911.h5.sobj_norm, SRR13911912.h5.sobj_norm, SRR13911913.h5.sobj_norm, SRR13911914.h5.sobj_norm)
 ```
 
-(심화)[코드 6-4] 코드 6-1 부터 6-3까지를 함축한 명령어
+(심화)[코드 6-5] 코드 6-1 부터 6-4까지를 함축한 명령어
 ```{r}
-# 모든 샘플 정규화하고 하나의 리스트로 묶기. 
-lognorm_list <- lapply(c(SRR13911909.h5.sobj, SRR13911910.h5.sobj, SRR13911911.h5.sobj,
-                      SRR13911912.h5.sobj,SRR13911913.h5.sobj,SRR13911914.h5.sobj), function(x) {
+# 모든 샘플 정규화하고 하나의 리스트로 묶기
+lognorm_list <- lapply(seurat_objects_list, function(x) {
   x <- NormalizeData(x)
   x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 2000)
+  x <- ScaleData(x) 
 })
 ```
 
-
-[코드 6-4] 여러 카운트 값 비교하기 
 ```{r}
 # raw 데이터 
 SRR13911909.h5.sobj_norm[["RNA"]]$counts # 혹은 pbmc_alzheimer_Log_1@assays$RNA$counts.1
@@ -347,31 +354,52 @@ pbmc_alzheimer_Log_2_joined <- FindClusters(pbmc_alzheimer_Log_2_joined, resolut
 DimPlot(
   pbmc_alzheimer_Log_2_joined,
   reduction = "umap",
-  group.by = c("Age"),
+  group.by = "Age",
   combine = FALSE, label.size = 2
 )
 ```
 
-## 챕터 6.2 SCTranfrom정규화 이용 
-
-Reference : https://satijalab.org/seurat/articles/sctransform_vignett 
-TODO: reference 쪽 다 정리하기 
-
+## 챕터 6.2 SCTranfrom정규화 이용
 [코드 6-5] SCTransform 정규화 실행하기
 _SCTransform()_: https://satijalab.org/seurat/reference/sctransform 
 ```{r}
-SRR13911909.h5.sobj_SCT <- SCTransform(SRR13911909.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
-SRR13911910.h5.sobj_SCT <- SCTransform(SRR13911910.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
-SRR13911911.h5.sobj_SCT <- SCTransform(SRR13911911.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
-SRR13911912.h5.sobj_SCT <- SCTransform(SRR13911912.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
-SRR13911913.h5.sobj_SCT <- SCTransform(SRR13911913.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
-SRR13911914.h5.sobj_SCT <- SCTransform(SRR13911914.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
+job({
+  SRR13911909.h5.sobj_SCT <- SCTransform(SRR13911909.h5.sobj, vars.to.regress = "percent.mt", verbose = TRUE) 
+  SRR13911910.h5.sobj_SCT <- SCTransform(SRR13911910.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
+  SRR13911911.h5.sobj_SCT <- SCTransform(SRR13911911.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
+  SRR13911912.h5.sobj_SCT <- SCTransform(SRR13911912.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
+  SRR13911913.h5.sobj_SCT <- SCTransform(SRR13911913.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
+  SRR13911914.h5.sobj_SCT <- SCTransform(SRR13911914.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
+})
+
+# Running SCTransform on assay: RNA
+# Running SCTransform on layer: counts
+# vst.flavor='v2' set. Using model with fixed slope and excluding poisson genes.
+# Variance stabilizing transformation of count matrix of size 20543 by 11464
+# Model formula is y ~ log_umi
+# Get Negative Binomial regression parameters per gene
+# Using 2000 genes, 5000 cells
+# Found 269 outliers - those will be ignored in fitting/regularization step
+# 
+# Second step: Get residuals using fitted parameters for 20543 genes
+# Computing corrected count matrix for 20543 genes
+# Calculating gene attributes
+# Wall clock passed: Time difference of 1.036254 mins
+# Determine variable features
+# Regressing out percent.mt
+# Centering data matrix
+# Getting residuals for block 1(of 3) for counts dataset
+# Getting residuals for block 2(of 3) for counts dataset
+# Getting residuals for block 3(of 3) for counts dataset
+# Regressing out percent.mt
+# Centering data matrix
+# Finished calculating residuals for counts
+# Set default assay to SCT
 ```
 
 [코드 6-6] 여러 개의 슈랏 오브젝트를 하나의 리스트로 묶기 
 ```{r}
-pbmc_alzheimer_SCT.list2 <- list(SRR13911909.h5.sobj_SCT, SRR13911910.h5.sobj_SCT, SRR13911911.h5.sobj_SCT, SRR13911912.h5.sobj_SCT,
-                  SRR13911913.h5.sobj_SCT, SRR13911914.h5.sobj_SCT)
+pbmc_alzheimer_SCT.list <- list(SRR13911909.h5.sobj_SCT, SRR13911910.h5.sobj_SCT, SRR13911911.h5.sobj_SCT, SRR13911912.h5.sobj_SCT, SRR13911913.h5.sobj_SCT, SRR13911914.h5.sobj_SCT)
 ```
 
 (참고)[코드 6-7] 오브젝트 저장 및 불러오기
@@ -382,11 +410,18 @@ saveRDS(pbmc_alzheimer_SCT.list, "./rds/pbmc_alzheimer_SCT.list.rds")
 # 오브젝트 불러오기 
 pbmc_alzheimer_SCT.list <- readRDS("./rds/pbmc_alzheimer_SCT.list.rds")
 ```
+(참고)[코드 6-8] 오브젝트 삭제 및 메모리 정리 
+```{r}
+# 불필요한 오브젝트 삭제  
+rm(SRR13911909.h5.sobj_SCT) 
+ 
+# 메모리 정리 
+gc() 
+```
 
 
 ## 챕터 6.3 데이터 통합 
-
-[코드 6-7] SCTransform 을 이용하여 데이터 통합하기 (Integration)
+[코드 6-9] SCT 에세이를 기반으로 데이터 합치기 
 ```{r}
 # 샘플 간의 공통 유전자 찾기
 features <- SelectIntegrationFeatures(object.list = pbmc_alzheimer_SCT.list, nfeatures = 3000) 
@@ -397,11 +432,239 @@ pbmc_alzheimer_SCT.anchors <- FindIntegrationAnchors(object.list = pbmc_alzheime
                                                      normalization.method = "SCT", 
                                                      anchor.features = features,
                                                      reduction = "cca")
+# Warning: Some cell names are duplicated across objects provided. Renaming to enforce unique cell names.Finding all pairwise anchors
 # 통합하기 
 pbmc_alzheimer_SCT.combined <- IntegrateData(anchorset = pbmc_alzheimer_SCT.anchors, 
                                              normalization.method = "SCT") 
+
+
+# saveRDS(pbmc_alzheimer_SCT.anchors, "./rds/pbmc_alzheimer_SCT.anchors.rds")
+```
+```{r}
+# Warning: Some cell names are duplicated across objects provided. Renaming to enforce unique cell names.Finding all pairwise anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 20874 anchors
+# Filtering anchors
+# 	Retained 15958 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 23676 anchors
+# Filtering anchors
+# 	Retained 17088 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 21707 anchors
+# Filtering anchors
+# 	Retained 15388 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 23075 anchors
+# Filtering anchors
+# 	Retained 16257 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 21359 anchors
+# Filtering anchors
+# 	Retained 14311 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 24938 anchors
+# Filtering anchors
+# 	Retained 17198 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 23912 anchors
+# Filtering anchors
+# 	Retained 17390 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 21706 anchors
+# Filtering anchors
+# 	Retained 15468 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 24716 anchors
+# Filtering anchors
+# 	Retained 17717 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 23991 anchors
+# Filtering anchors
+# 	Retained 17011 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 27923 anchors
+# Filtering anchors
+# 	Retained 17655 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 25301 anchors
+# Filtering anchors
+# 	Retained 15261 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 29464 anchors
+# Filtering anchors
+# 	Retained 18067 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 29590 anchors
+# Filtering anchors
+# 	Retained 18058 anchors
+# Running CCA
+# Merging objects
+# Finding neighborhoods
+# Finding anchors
+# 	Found 29331 anchors
+# Filtering anchors
+# 	Retained 17480 anchors
+# [1] 1
+# Warning: Different cells and/or features from existing assay SCTWarning: Layer counts isn't present in the assay object; returning NULL[1] 2
+# Warning: Different cells and/or features from existing assay SCTWarning: Layer counts isn't present in the assay object; returning NULL[1] 3
+# Warning: Different cells and/or features from existing assay SCTWarning: Layer counts isn't present in the assay object; returning NULL[1] 4
+# Warning: Different cells and/or features from existing assay SCTWarning: Layer counts isn't present in the assay object; returning NULL[1] 5
+# Warning: Different cells and/or features from existing assay SCTWarning: Layer counts isn't present in the assay object; returning NULL[1] 6
+# Warning: Different cells and/or features from existing assay SCTWarning: Layer counts isn't present in the assay object; returning NULLMerging dataset 2 into 1
+# Extracting anchors for merged samples
+# Finding integration vectors
+# Finding integration vector weights
+# 0%   10   20   30   40   50   60   70   80   90   100%
+# [----|----|----|----|----|----|----|----|----|----|
+# **************************************************|
+# Integrating data
+# Warning: Layer counts isn't present in the assay object; returning NULLMerging dataset 3 into 6
+# Extracting anchors for merged samples
+# Finding integration vectors
+# Finding integration vector weights
+# 0%   10   20   30   40   50   60   70   80   90   100%
+# [----|----|----|----|----|----|----|----|----|----|
+# **************************************************|
+# Integrating data
+# Warning: Layer counts isn't present in the assay object; returning NULLMerging dataset 5 into 6 3
+# Extracting anchors for merged samples
+# Finding integration vectors
+# Finding integration vector weights
+# 0%   10   20   30   40   50   60   70   80   90   100%
+# [----|----|----|----|----|----|----|----|----|----|
+# **************************************************|
+# Integrating data
+# Warning: Layer counts isn't present in the assay object; returning NULLMerging dataset 1 2 into 6 3 5
+# Extracting anchors for merged samples
+# Finding integration vectors
+# Finding integration vector weights
+# 0%   10   20   30   40   50   60   70   80   90   100%
+# [----|----|----|----|----|----|----|----|----|----|
+# **************************************************|
+# Integrating data
+# Warning: Layer counts isn't present in the assay object; returning NULLMerging dataset 4 into 6 3 5 1 2
+# Extracting anchors for merged samples
+# Finding integration vectors
+# Finding integration vector weights
+# 0%   10   20   30   40   50   60   70   80   90   100%
+# [----|----|----|----|----|----|----|----|----|----|
+# **************************************************|
+# Integrating data
+# Warning: Layer counts isn't present in the assay object; returning NULLWarning: sparse->dense coercion: allocating vector of size 1.7 GiBWarning: Assay integrated changing from Assay to SCTAssayWarning: Layer counts isn't present in the assay object; returning NULLWarning: Different cells and/or features from existing assay SCT
 ```
 
+
+(참고) [코드 6-10] 메모리 할당량 늘리기 
+```{r}
+# 필요 없는 오브젝트들 삭제 
+rm(count_SRR13911909.h5, count_SRR13911910.h5, count_SRR13911911.h5, count_SRR13911912.h5, count_SRR13911913.h5, count_SRR13911914.h5)
+rm(SRR13911909.h5.sobj, SRR13911910.h5.sobj, SRR13911911.h5.sobj, SRR13911912.h5.sobj, SRR13911913.h5.sobj, SRR13911914.h5.sobj)
+rm(SRR13911909.h5.sobj_SCT, SRR13911910.h5.sobj_SCT, SRR13911911.h5.sobj_SCT, SRR13911912.h5.sobj_SCT, SRR13911913.h5.sobj_SCT, SRR13911914.h5.sobj_SCT)
+
+# R 메모리 할당량 늘리기
+Install.packages("usethis")
+library(usethis) 
+usethis::edit_r_environ()
+# 위의 코드로 R 환경 설정 파일 ('.Renviron') 이 실행되면 'R_MAX_VSIZE=100Gb' 작성 후 저장하기
+```
+
+[코드 6-11]
+```{r}
+# future 패키지 설치 및 불러오기  
+install.packages("future") 
+library(future) 
+
+# 병렬 처리 전략 설정  
+plan("multicore", workders = 8) 
+
+# 병렬 작업 중 전역 환경에서 사용할 수 있는 메모리의 최대 크기 제한.  
+options(future.globals.maxSize = 8000 * 1024^2 ) 
+```
+[코드 6-12] 로그 정규화환 샘플들을 하나로 통합하기? error
+```{r}
+
+```
+
+```{r}
+# window specific
+memory.limit()
+memory.size()
+
+# others 
+#  1 GB = 1,024 × 1,024 kB = 1,048,576 kB
+system("grep MemTotal /proc/meminfo") # 528,241,728kB ~ 503.GB
+system("grep MemFree /proc/meminfo")
+
+Sys.getenv()
+grepl("R_MAX_VSIZE",Sys.getenv())
+
+
+# error: Error in getGlobalAndPackes(expr, envir = envir, globals = globals)
+# try [1]
+options(future.globals.maxSize = 50000 * 1024^2) 
+
+# try [2] 
+library(future)
+plan("multiprocess", workers = 10)
+
+
+# error: vector memory exhausted 
+# try [1] 
+Sys.setenv('R_MAX_VSIZE'=32000000000) # set the memory limit to ~ 30 GB 
+
+
+# try [2]
+library(usethis) 
+usethis::edit_r_environ() 
+# add R_MAX_VSIZE=100Gb when the screen opens using 'usethis::edit_r_environ() '
+
+# try [3] : rm unnecessary things 
+rm(SRR13911909.h5.sobj)
+rm(SRR13911909.h5.sobj_SCT)
+```
 
 (예시) 앵커 들여다보기
 TODO: 확인
@@ -418,26 +681,56 @@ pbmc_alzheimer_SCT.combined[["integrated"]]$data[1:5, 1:5]
 pbmc_alzheimer_SCT.combined[["integrated"]]$scale.data[1:5, 1:5]
 ```
 
+```{r}
+merged_sobj <- merge(SRR13911909.h5.sobj_norm, 
+                     y = c(SRR13911910.h5.sobj_norm, SRR13911911.h5.sobj_norm, 
+                           SRR13911912.h5.sobj_norm, SRR13911913.h5.sobj_norm, 
+                           SRR13911914.h5.sobj_norm))
 
-# 챕터 7 "차원 축소 및 클러스터링" 
+merged_sobj <- JoinLayers(merged_sobj) 
+merged_sobj <- RunPCA(merged_sobj) 
 
+merged_sobj_integrated <- IntegrateLayers(
+  object = merged_sobj, 
+  method = CCAIntegration,
+  orig.reduction = "pca", 
+  new.reduction = "integrated.cca",
+  verbose = FALSE
+)
+# Error in UseMethod(generic = "Assays", object = object) : 
+#   no applicable method for 'Assays' applied to an object of class "NULL"
+
+merged_sobj_integrated <- IntegrateLayers(
+  object = merged_sobj, method = HarmonyIntegration,
+  orig.reduction = "pca", new.reduction = "harmony",
+  verbose = FALSE
+)
+# Error in names(groups) <- "group" : attempt to set an attribute on NULL
+```
+
+
+# 챕터 7 차원 축소 및 클러스터링
 SCTransform 정규화 및 CCA 통합 된 pbmc_alzheimer_SCT.combined로 이어서 진행합니다. 
   - _RunPCA()_: PCA on the scaled data
   - _RunUMAP()_
   - _FindNeighbors()_
   - _FindClusters()_ 
 
-
 [코드 7-1] PCA 차원 축소하기
 ```{r}
-pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = FALSE)
+pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = TRUE)
 ```
 
 [코드 7-2] PCA 주성분 수 고르기
-TODO: elbowplot, dimheatmap plot 한국어? 
-```{r}
-ElbowPlot(pbmc_alzheimer_SCT.combined, ndims = 30, reduction = 'pca') 
-DimHeatmap(pbmc_alzheimer_SCT.combined, dims = 1:20, cells = 500, balanced = TRUE)
+```{r, fig.height = 10}
+# 엘보우 플롯 (주성분 50개)  
+ElbowPlot(pbmc_alzheimer_SCT.combined, ndims = 530, reduction = 'pca')
+```
+
+[코드 7-3] 주성분별 히트맵 그리기
+```{r, fig.height = 10}
+# 주성분 1부터 주성분 6까지의 히트맵  
+DimHeatmap(pbmc_alzheimer_SCT.combined, dims = 1:6, cells = 500, balanced = TRUE) 
 ```
 
 ```{R}
@@ -447,39 +740,45 @@ DimHeatmap(pbmc_alzheimer_SCT.combined, dims = 1:20, cells = 500, balanced = TRU
 print(pbmc_alzheimer_SCT.combined[["pca"]], dims = 1:10, nfeatures = 5)
 DimPlot(pbmc_alzheimer_SCT.combined, reduction = "pca") + NoLegend() # 나중에 clustering 한 후에, 해당 색칠해서 확인해보면 어느 pc dimension이 어떤 cell type을 구분할 수 있는지도 보인다. 
 ElbowPlot(pbmc_alzheimer_SCT.combined, ndims = 30, reduction = 'pca') # -> 20 dimension 사용 예정
-DimHeatmap(pbmc_alzheimer_SCT.combined, dims = 1:9, cells = 500, balanced = TRUE)
+DimHeatmap(pbmc_alzheimer_SCT.combined, dims = 25:30, cells = 500, balanced = TRUE)
 # dev.off()
 ```
 
-[코드 7-3] TSNE 계산하기
+[코드 7-4] TSNE 계산하기
 ```{r}
 # TSNE
-pbmc_alzheimer_SCT.combined <- RunTSNE(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:20, verbose = FALSE)
+pbmc_alzheimer_SCT.combined <- RunTSNE(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:30, verbose = FALSE)
 ```
 
-[코드 7-4] UMAP 계산하기
+[코드 7-5] UMAP 계산하기
 ```{r}
 # UMAP
-pbmc_alzheimer_SCT.combined <- RunUMAP(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:20, verbose = FALSE)
+pbmc_alzheimer_SCT.combined <- RunUMAP(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:30, verbose = FALSE)
 ```
 
-[코드 7-5] 클러스터링 계산하기
+[코드 7-5] 클러스터링
 ```{r}
-pbmc_alzheimer_SCT.combined <- FindNeighbors(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:20)
+pbmc_alzheimer_SCT.combined <- FindNeighbors(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:30)
 pbmc_alzheimer_SCT.combined <- FindClusters(pbmc_alzheimer_SCT.combined, resolution = c(0.1,0.3, 0.5))
 ```
 
+```{r}
+# saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT.combined_UMAP.rds")
+```
+
+
 (심화)[코드 7-6] 차원축소 및 클러스터링 한번에 진행하기 
+[코드 7-1]부터 [코드 7-5]까지 한번에 실행하는 코드입니다. 
 ```{r}
 pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = FALSE) %>%
-  RunUMAP(., reduction = "pca", dims = 1:20, verbose = FALSE) %>%
-  FindNeighbors(., reduction = "pca", dims = 1:20) %>% 
+  RunUMAP(., reduction = "pca", dims = 1:30, verbose = FALSE) %>%
+  FindNeighbors(., reduction = "pca", dims = 1:30) %>% 
   FindClusters(., resolution = c(0.1, 0.3, 0.5))
 ```
 
 [코드 7-7] UMAP 시각화 
 ```{r, fig.width = 15}
-# pdf("./results/UMAP_integrated_snn_res.0.1_0.3_0.5.pdf", width = 10)
+pdf("./results/UMAP_integrated_snn_res.0.1_0.3_0.5.pdf", width = 10)
 Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.1"
 DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "umap")
 
@@ -488,7 +787,7 @@ DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "uma
 
 Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.5"
 DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "umap")
-# dev.off()
+dev.off()
 ```
 
 [코드 7-8] TSNE 시각화 
@@ -513,6 +812,29 @@ dev.off()
 
 
 # 챕터 8 배치 효과 교정 
+```{r}
+# test 1
+lognorm_list_processed <- lapply(lognorm_list, function(sobj) {  
+    sobj <- sobj %>%  
+      SCTransform(.,verbose = FALSE) %>%
+      RunPCA(., verbose = FALSE) %>%
+      RunUMAP(., reduction = "pca", dims = 1:20, verbose = FALSE) %>%
+      FindNeighbors(., reduction = "pca", dims = 1:20) %>% 
+      FindClusters(., resolution = c(0.3)) # option
+}) 
+# merge them
+lognorm_list_processed_merged <- scCustomixe::Merge_Seurat_List(
+  lognorm_list_processed,
+  add.cell.ids = NULL,
+  merge.data = TRUE
+)
+# draw dimplot 
+
+
+# test 2 
+# merge them 
+# then run dimension reduction 
+```
 
 [코드 8-1] 배치 효과 교정 없이 슈랏 오브젝트들 합치기
 ```{r}
@@ -660,7 +982,7 @@ dim(pbmc_alzheimer_SCT.combined@assays$SCT@scale.data) # 2000, 74134
 
 [코드 8-4] Harmony 방법을 이용한 배치 효과 교정 및 데이터 통합  
 ```{r}
-# memory.limit() # Inf
+# memory.limit() # Inf - window specific
 # options(future.globals.maxSize = 3e+09)
 # memory.limit(size = NA)
 # 데이터 복사 
@@ -673,6 +995,19 @@ obj_SCT <- IntegrateLayers(
   normalization.method = "SCT", 
   new.reduction = "integrated.harmony", # 새로운 차원축소 데이터 이름 
   verbose = F
+)
+
+# Error in `contrasts<-`(`*tmp*`, value = contr.funs[1 + isOF[nn]]) : 
+#   contrasts can be applied only to factors with 2 or more levels
+#  Seurat_5.1.0
+Layers(obj_SCT)
+
+
+# test 
+IntegrateLayers( # this works 
+  object = obj_SCT, method = RPCAIntegration,
+  orig.reduction = "pca", new.reduction = "integrated.rpca",
+  verbose = FALSE
 )
 ```
 
@@ -1105,8 +1440,48 @@ degs_severeADvsnormal <- FindMarkers(pbmc_alzheimer_SCT.combined, ident.1 = "pat
 saveRDS(degs_severeADvsnormal, "./rds/degs_severeADvsnormal.rds")
 ```
 
+# 챕터 11 추가 분석 툴들 
+## 11.1 품질 관리(QC)
+### 11.1.1 두방울 세포 제거
+#### DoubletFinder
+```{r}
+# DoubleFinder 설치 및 불러오기 
+install.packages("remotes")
+remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')
+library(DoubletFinder)
 
+# 각 샘플마다 최근접 이웃 (NN) 찾기 및 SNN 그래프 구축 
+pbmc_alzheimer_SCT.list_processed <- lapply(pbmc_alzheimer_SCT.list, function(sobj) {  
+    sobj <- sobj %>%  
+      SCTransform(.,verbose = FALSE) %>%
+      RunPCA(., verbose = FALSE) %>%
+      RunUMAP(., reduction = "pca", dims = 1:30, verbose = FALSE) %>%
+      FindNeighbors(., reduction = "pca", dims = 1:30) %>% 
+      FindClusters(., resolution = c(0.3)) # option
+}) 
 
+# 각 샘플마다 두 세포 방울 찾기  
+pbmc_alzheimer_SCT.list_processed_doublefinder <- lapply(pbmc_alzheimer_SCT.list_processed, function(sobj) {  
+  # 예시로 전체 세포의 7.5%를 예상 두방울 수로 설정
+  nExp_poi <- round(0.075 * nrow(sobj@meta.data))
+  # DoubletFinder 실행 
+  sobj_doublefinder <- doubletFinder(sobj, PCs = 1:10, pN = 0.25, pK = 0.09, nExp = nExp_poi, reuse.pANN = FALSE, sct = TRUE) 
+})
+```
+
+[코드 11-3] DoubletFinder 실행 결과 시각화 예시 
+```{r}
+# DoubletFinder 결과 확인 
+pbmc_alzheimer_SCT.list_processed_doublefinder[[1]]@meta.data[1:5,]
+
+# UMAP 시각화 
+DimPlot(pbmc_alzheimer_SCT.list_processed_doublefinder[[1]],  group.by = "DF.classifications_0.25_0.09_860") 
+```
+
+#### scDblFinder
+```{r}
+
+```
 
 
 

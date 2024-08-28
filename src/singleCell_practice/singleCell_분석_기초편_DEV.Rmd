@@ -440,7 +440,7 @@ pbmc_alzheimer_SCT.combined <- SCTransform(pbmc_alzheimer_SCT.combined, vars.to.
 ```
 
 ```{r}
-pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combined_2.rds")  # 2024.01.16 
+# pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combined_2.rds")  # 2024.01.16 
 # (메모용) pbmc_alzheimer_SCT.combined_1.rds, mt < 5%
 # (메모용) pbmc_alzheimer_SCT.combined_2.rds, mt < 10%, min.cell = 3, min.features = 200, regress=mt
 # (Question) Active assay: integrated (2000 features, 2000 variable features) why 2000 features?? i thought i used 3000 , check with him
@@ -959,7 +959,7 @@ library(celldex)
 ref.data <- HumanPrimaryCellAtlasData(ensembl=F)
 
 ## singeR 
-# devtools::install_github('dviraran/SingleR')
+devtools::install_github('dviraran/SingleR')
 library(SingleR)
 library(Seurat)
 sobj_SCE <- as.SingleCellExperiment(sobj_SCT_merged_method_1_clustered, assay="SCT")
@@ -1077,10 +1077,18 @@ db_ = "https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/ScType
 
 # 조직 유형 유추하기 (이거 오래 걸림)
 tissue_guess = auto_detect_tissue_type(path_to_db_file = db_, seuratObject = pbmc_alzheimer_SCT.combined, scaled = TRUE, assay = "SCT")        
-
+ # error in evaluating the argument 'x' in selecting a method for function 'as.matrix': no slot of name "data_type" for this object of class "SCTAssay"
 # assay = "integrated"
 # Error in h(simpleError(msg, call)) : 
 #   error in evaluating the argument 'x' in selecting a method for function 'rowSums': incorrect number of
+```
+
+```{r}
+library(job)
+job::job({
+  saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT.combinded_2_clustered_20240629.rds")  
+})
+# pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combinded_2_clustered_20240629.rds")
 ```
 
 ### ScanVI
@@ -1103,27 +1111,34 @@ adata <- convertFormat(pbmc_alzheimer_SCT.combined, from="seurat", to="anndata",
 print(adata) # Note generally in Python, dataset conventions are obs x var
 ```
 
-```{r}
-saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT.combinded_2_clustered_20240302.rds")
-```
+
 
 
 # 챕터 10 단일 세포 데이터 후속 분석 
+```{r}
+pbmc_alzheimer_SCT.combined[[]] <- pbmc_alzheimer_SCT.combined[[]] %>%
+  mutate(customclassif = gsub(" |  ", "_", customclassif))
+```
+
 
 [코드 10-1] 그룹간 차등 유전자 발현(DEG) 분석 실행하기 
 ```{r}
-# DefaultAssay(pbmc_alzheimer_SCT.combined) <- "integrated"
+# 그룹 에세이와식별자 설정
+DefaultAssay(pbmc_alzheimer_SCT.combined) <- "SCT"
 Idents(pbmc_alzheimer_SCT.combined) <- "subject_status"
-degs_severeADvsnormal <- FindMarkers(pbmc_alzheimer_SCT.combined, ident.1 = "patient with severe AD", ident.2 = "normal individual", only.pos = FALSE)
-degs_mildADvsnormal <- FindMarkers(pbmc_alzheimer_SCT.combined, ident.1 = "patient with mild AD", ident.2 = "normal individual", only.pos = FALSE)
-# saveRDS(degs_mildADvsnormal, "./rds/degs_mildADvsnormal.rds")
-# saveRDS(degs_severeADvsnormal, "./rds/degs_severeADvsnormal.rds")
 
-# avg_log2FC 값으로 내림차순 정렬하기
+# 중증 환자 vs 일반인 차등 발현 유전자
+# SCT
+degs_severeADvsnormal <- FindMarkers(pbmc_alzheimer_SCT.combined, ident.1 = "patient with severe AD", ident.2 = "normal individual", only.pos = FALSE)
+
+# 경증 환자 vs 일반인 차등 발현 유전자
+degs_mildADvsnormal <- FindMarkers(pbmc_alzheimer_SCT.combined, ident.1 = "patient with mild AD", ident.2 = "normal individual", only.pos = FALSE)
+
+# avg_log2FC 절댓값으로 내림차순 정렬하기
 degs_severeADvsnormal <- degs_severeADvsnormal %>%
-  arrange(-(avg_log2FC))
+  arrange(-abs(avg_log2FC))
 degs_mildADvsnormal <- degs_mildADvsnormal %>%
-  arrange(-(avg_log2FC))
+  arrange(-abs(avg_log2FC))
 ```
 [코드 10-2] 데이터 프레임 csv 형태로 저장하기  
 ```{r}
@@ -1131,20 +1146,42 @@ write.csv(degs_severeADvsnormal, "../results/all_degs_severeADvsnormal.csv", row
 write.csv(degs_mildADvsnormal, "../results/all_degs_mildADvsnormal.csv", row.names=F) 
 ```
 
-[코드 10-3] 세포 유형별 차등 유전자 발현(DEG) 분석 실행하기 
+
+[코드 10-3] 차등 발현 유전자 시각화 
+```{r fig.height=10}
+# set up 
+Idents(pbmc_alzheimer_SCT.combined) <- "subject_status"
+DefaultAssay(pbmc_alzheimer_SCT.combined) <- "SCT"
+
+# VlnPlot
+VlnPlot(pbmc_alzheimer_SCT.combined, features = rownames(degs_severeADvsnormal)[1:6],
+        layer = "data", log = TRUE)
+
+# RidgePLot 
+RidgePlot(pbmc_alzheimer_SCT.combined, features = rownames(degs_severeADvsnormal)[1:6],
+        layer = "data")
+
+# Feature Plot 
+FeaturePlot(pbmc_alzheimer_SCT.combined, features = rownames(degs_severeADvsnormal)[1:2], split.by = "subject_status")
+```
+
+
+[코드 10-4] 세포 유형별 차등 발현 유전자(DEG) 분석 실행하기 
 ```{r}
 # 세포 유형별 차등 유전자 발현(DEG) 분석 함수 
 run_DEGs_per_celltype <- function(seurat_obj, celltype){
   
   # 특정 세포 유형으로만 이루어진 슈랏 오브젝트 부분 추출하기 
-  sobj_sub <- subset(x = seurat_obj, subset = cell_type == celltype)
+  sobj_sub <- subset(x = seurat_obj, subset = customclassif == celltype)
   
   # 특정 세포 유형에서 차등 발현 유전자 구하기 
   Idents(sobj_sub) <- "subject_status"
+  sobj_sub <- PrepSCTFindMarkers(object = sobj_sub)
+
   ## 중증 환자 vs 일반인 
-  degs_severeADvsnormal <- FindMarkers(seurat_obj, ident.1 = "patient with severe AD", ident.2 = "normal individual", only.pos = FALSE)
+  degs_severeADvsnormal <- FindMarkers(sobj_sub, ident.1 = "patient with severe AD", ident.2 = "normal individual", only.pos = FALSE, recorrect_umi=FALSE)
   ## 경증 환자 vs 일반인 
-  degs_mildADvsnormal <- FindMarkers(seurat_obj, ident.1 = "patient with mild AD", ident.2 = "normal individual", only.pos = FALSE)
+  degs_mildADvsnormal <- FindMarkers(sobj_sub, ident.1 = "patient with mild AD", ident.2 = "normal individual", only.pos = FALSE, recorrect_umi=FALSE)
   
   # avg_log2FC 값으로 내림차순 정렬하기 
   degs_severeADvsnormal <- degs_severeADvsnormal %>% 
@@ -1159,45 +1196,172 @@ run_DEGs_per_celltype <- function(seurat_obj, celltype){
   return(sobj_sub)
 }
 
-# 각 세포유형 마다 실행하기 
-sobj_sebsets_list <- list()
-for (celltype in unique(pbmc_alzheimer_SCT.combined$cell_type)){
+# 각 세포유형 마다 실행하기 (실행한 후 커피한잔 하고 오세요)
+sobj_subsets_list <- list()
+DefaultAssay(pbmc_alzheimer_SCT.combined) <- "SCT"
+for (celltype in unique(pbmc_alzheimer_SCT.combined$customclassif)){ # using scTYPE celltype
   print(glue::glue("### {celltype} is processing ... "))
   sobj_subset <- run_DEGs_per_celltype(pbmc_alzheimer_SCT.combined, celltype)
   
   # 부분 추출 된 슈랏 오브젝트들을 리스트에 추가하기  
-  sobj_sebsets_list[[celltype]] <- sobj_subset
+  sobj_subsets_list[[celltype]] <- sobj_subset
 }
 
 # 후속 분속에 이용하기 위하여 저장하기 
-saveRDS(sobj_sebsets_list, "./rds/sobj_sebsets_list.rds")
+saveRDS(sobj_subsets_list, "./rds/sobj_sebsets_list.rds")
+sobj_subsets_list 
 ```
 
-[코드 10-4] b 세포의 차등 발현 유전자 데이터 확인하기 
+
+[코드 10-5] b 세포의 차등 발현 유전자 데이터 확인하기 
 ```{r}
 # b 세포의 차등 발현 유전자 데이터 확인하기 
-degs_bcell <- read.csv("./results/B_cell_degs_severeADvsnormal.csv", stringsAsFactors = FALSE)
+degs_bcell <- read.csv("./results/Naive_B_cells_degs_severeADvsnormal.csv", stringsAsFactors = FALSE)
+degs_bcell_0.05 <- degs_bcell %>%
+  filter(p_val_adj < 0.05) %>%
+  arrange(-abs(avg_log2FC))
 
 # 상향 조절 유전자 들여다보기 
-degs_bcell %>% 
+degs_bcell_up <- degs_bcell_0.05 %>% 
   filter(avg_log2FC > 0)
 
-# 하양 조절 유전자 들여다보기 
-degs_bcell %>% 
+# 하양 조절 유전자 들여다보기
+degs_bcell_down <- degs_bcell_0.05 %>% 
   filter(avg_log2FC < 0)
 ```
 
-[코드 10-5] B 세포의 차등 발현 유전자 발현 패턴 시각화: 히트맵 
+[코드 10-6] B 세포의 차등 발현 유전자 발현 패턴 시각화: 히트맵 
 ```{r, fig.width = 10}
-DoHeatmap(pbmc_alzheimer_SCT.combined, features = degs_bcell$X[1:50]) + noLegend() 
-DoHeatmap(sobj_sebsets_list$B_cell, features = degs_bcell$X[1:50])
+# Seurat의 DoHeatmap 이용 
+sobj_subsets_list$`Naive B cells`
+DefaultAssay(sobj_subsets_list$`Naive B cells`) <- "SCT"
+DoHeatmap(sobj_subsets_list$`Naive B cells`, features = c(degs_bcell_up$X[1:20], degs_bcell_down$X[1:20]),
+          slot= "data", size = 4, angle = 0, hjust = 0.5) + 
+  ggtitle("Top 30 DEGs of Naive B cell")
+
+# per group 
+group_means <- AggregateExpression(sobj_subsets_list$`Naive B cells`, group.by = "subject_status")
+degs_bcell_up %>%
+  filter(p_val_adj)
+group_means_matrix_sub <- group_means$RNA[c(degs_bcell_up$X[1:200], degs_bcell_down$X[1:200]),]
+group_means_matrix_sub <- group_means$RNA[degs_bcell_0.05$X,]
+
+# Create the heatmap
+pheatmap(group_means_matrix_sub, 
+         cluster_rows = FALSE, 
+         cluster_cols =FALSE, 
+         show_rownames = FALSE, 
+         show_colnames = TRUE,
+         angle_co= 0 ,
+         scale = "row", 
+         main = "Naive B CELL DEGs",
+         breaks = seq(-1, 1, length.out = 101),
+         color = colorRampPalette(c("blue", "white", "red"))(100)) 
 ```
 
-[코드 10-6] b 세포에서의 차등 발현 유전자 박스 플롯 그리기 
+[코드 10-7] B 세포에서의 차등 발현 유전자 박스 플롯 그리기 
+```{r, fig.width = 12}
+# test <- sobj_subsets_list$B_cell@assays$SCT$counts[degs_bcell[1:10, ]$X, ]
+# test <- as.data.frame(test)
+# log10(test+1)
+# boxplot(t(test))
+
+Idents(pbmc_alzheimer_SCT.combined) <- "subject_status"
+DefaultAssay(pbmc_alzheimer_SCT.combined) <- "SCT"
+
+sobj_bcell <- sobj_subsets_list$`Naive B cells`
+DefaultAssay(sobj_bcell) <- "SCT"
+RidgePlot(sobj_bcell, features = degs_bcell[1:6, ]$X, ncol = 2, layer = "data", , log = TRUE)
+
+VlnPlot(pbmc_alzheimer_SCT.combined, features = degs_bcell[1:6, ]$X, layer = "data", log = TRUE)
+```
+
+[코드 10-8] B 세포 재클러스터링  
+pbmc_alzheimer_SCT.combined@graphs$integrated_nn (nn: kNN graph , snn: shared NN graph)
+```{r fig.width = 7}
+# [1] 원래 데이터 이용하기 
+Idents(pbmc_alzheimer_SCT.combined) <- "customclassif"
+pbmc_alzheimer_SCT.combined <- FindSubCluster(
+  pbmc_alzheimer_SCT.combined,
+  "Naive_B_cells",
+  graph.name = "integrated_nn",
+  subcluster.name = "sub.cluster",
+  resolution = 0.5,
+  algorithm = 1
+)
+# 시각화 
+DimPlot(test, group.by = "sub.cluster")
+
+
+# [2] B 세포 부분 데이터 이용하기 
+Bcells_subset <- sobj_subsets_list$`Naive B cells`
+Bcells_subset <- FindClusters(Bcells_subset, resolution = 0.5, graph.name ="integrated_nn", cluster.name = "B Cells' subclusters")
+# 시각화 
+DimPlot(Bcells_subset, group.by = "B Cells' subclusters")
+```
+
+
+Time series
+```{r, fig.width = 12}
+DimPlot(pbmc_alzheimer_SCT.combined, split.by = "subject_status", group.by = "customclassif", label.size = 2) + 
+  theme(legend.text = element_text(size = 8))
+```
+
+
+# 챕터 11 
+
+## 11.3 network regulon inference 
 ```{r}
+# 필요한 패키지 설치
+install.packages("BiocManager")
+BiocManager::install(c("Seurat", "AUCell", "SCENIC"))
+install.packages("devtools")
+devtools::install_github("aertslab/GRNBoost2")
 
+# 패키지 로드
+library(Seurat)
+library(SCENIC)
+library(AUCell)
+library(GRNBoost2)
+
+# Seurat 객체에서 유전자 발현 데이터 추출
+expr_matrix <- as.matrix(GetAssayData(seurat_object, slot = "data"))
+
+# 유전자 목록과 세포 목록 추출
+genes <- rownames(expr_matrix)
+cells <- colnames(expr_matrix)
+
+# GRNBoost 실행
+weight_matrix <- GRNBoost2(expr_matrix)
+
+# SCENIC 설정
+scenicOptions <- initializeScenic(org="hgnc", dbDir="path/to/databases", nCores=4) # "path/to/databases"를 적절히 수정
+
+# 단계 1: co-expression network 구축
+scenicOptions@settings$dbDir <- "path/to/databases" # 데이터베이스 경로 설정
+saveRDS(scenicOptions, file="int/scenicOptions.Rds") # 설정 저장
+
+# weight matrix 저장
+write.table(weight_matrix, file="int/1.4_GRNBoost_linkList.tsv", sep="\t", row.names=FALSE, col.names=TRUE)
+
+# 단계 2: regulon 구축
+scenicOptions <- runSCENIC_1_coexNetwork2modules(scenicOptions)
+scenicOptions <- runSCENIC_2_createRegulons(scenicOptions)
+scenicOptions <- runSCENIC_3_scoreCells(scenicOptions, expr_matrix)
+
+# AUCell 점수 계산
+aucellRankings <- AUCell_buildRankings(expr_matrix, plotStats=TRUE)
+aucellResults <- AUCell_calcAUC(regulons, aucellRankings)
+
+# 결과를 Seurat 객체에 추가
+seurat_object[["SCENIC_AUC"]] <- CreateAssayObject(data = getAUC(aucellResults))
+
+# UMAP 실행
+seurat_object <- RunUMAP(seurat_object, reduction = "pca", dims = 1:10, assay = "SCENIC_AUC")
+
+# 시각화
+DimPlot(seurat_object, reduction = "umap", group.by = "seurat_clusters")
 ```
-
 
 
 
