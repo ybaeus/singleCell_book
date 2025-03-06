@@ -1,0 +1,122 @@
+---
+title: "Chapter2"
+author: Yeji Bae and Dohyup Kim
+format: html
+editor: visual
+---
+
+해당 스크립트는 R언어를 이용하여 단일세포 데이터 분석을 하기에 앞서 간략히 알아야할 
+
+[코드 2-1] 함수 생성 및 실행 
+```{r}
+# 두개의 숫자 a, b를 더하는 함수 만들기  
+add_numbers <- function(a, b) { 
+  result <- a + b 
+  return(result) 
+} 
+
+# 함수 실행 예시 
+add_numbers(10,7) 
+```
+
+[코드 2-2] ggplot2 패키지 설치 
+```{r}
+install.packages("ggplot2") 
+```
+
+
+[코드 2-3] BiocManager를 통한 슈랏 패키지 설치
+```{r}
+# BiocManger 패키지 설치 및 버전 확인하기 
+install.packages("BiocManager") 
+BiocManager::version() 
+
+# 슈랏 설치하기
+BiocManager::install("Seurat") 
+```
+
+[코드2-4] 예제 데이터 생성 코드 
+랜덤으로 100명의 성별, 나이 그리고 키를 생성하는 코드입니다. 
+```{r}
+# 예제 데이터 생성하기 
+set.seed(123)    # 재현 가능성을 위해 시드 설정하기  
+n <- 100         # 샘플 수 저장하기 
+
+# 성별 데이터 생성: 50%의 확률로 'Male' 또는 'Female' 할당하기 
+gender <- sample(c("Male", "Female"), size = n, replace = TRUE) 
+
+# 나이 데이터 생성: 10~15세 정수값 무작위 할당하기 
+age <- sample(10:15, size = n, replace = TRUE) 
+
+# 키 데이터 생성  : 성별과 나이에 따라  평균과 분산이 다른 정규 분포에서 샘플링하기) 
+height <- ifelse(gender == "Male",  
+rnorm(n, mean = 150 + 3 * (age - 10), sd = 10),  
+rnorm(n, mean = 140 + 3 * (age - 10), sd = 8)) 
+
+# 데이터프레임 생성: gender, age, height 열 포함하기 
+data <- data.frame(gender = gender, age = age, height = height) 
+
+# 데이터를 csv파일로 저장하기  
+write.csv(data, "data.csv") 
+```
+
+[코드 2-5] 예제 데이터 시각화 - 막대 그래프와 박스 그래프 
+```{r}
+# 데이터 파일 읽기 
+# data <- read.csv("data.csv")  
+
+# 조건에 따른 데이터 필터링하기 
+data[data$age < 13, ]                    # 나이(age)가 13세 미만인 행 추출하기 
+data[data$age < 13, c("gender", "age")]  # 나이 13세 미만의 성별과 나이 열만 추출하기 
+data 
+
+# ggplot2 패키지 불러오기  
+library(ggplot2) 
+
+# 시각화하기 1: 막대 그래프 (나이별 성별 키 평균) 
+bar_plot <- ggplot(data, aes(x = age, y = height, fill = gender)) + 
+  geom_bar(stat = "summary", fun = "mean", position = "dodge") +       # 평균 계산 및 /막대 분리하기 
+  labs(x = "Age", y = "Height", fill = "Gender") +                     # 축 및 범례 라벨 설정하기 
+  ggtitle("Mean Height by Age") +                                      # 그래프 제목 추가하기 
+  scale_fill_manual(values = c("Male" = "blue", "Female" = "pink"))    # 성별 색상 지정하기 
+bar_plot 
+
+# 시각화하기 2: 박스 그래프 (성별 키 분포 비교) 
+box_plot <- ggplot(data, aes(x = gender, y = height)) + 
+  geom_boxplot() +                            # 박스플롯 추가하기 
+  labs(x = "Gender", y = "Height") +          # 축 라벨 설정하기 
+  ggtitle("Comparison of Height by Gender")   # 그래프 제목 추가하기 
+box_plot 
+```
+
+[코드 2-6] 예제 데이터 시각화 - 산점도
+```{r}
+# 시각화하기 3: 산점도 (나이별 키 분포 비교) 
+scatter_plot <- ggplot(data, aes(x = age, y = height, color = gender)) + 
+  geom_point() + 
+  labs(x = "Age", y = "Height", color = "Gender") + 
+  ggtitle("Height Distribution by Age") 
+scatter_plot 
+```
+[코드 2-7] 예제 데이터 시각화 - 박스 그래프 2 
+```{r}
+# 박스 그래프 그리기 (나이별 성별 키 분포) 
+box_plot2 <- ggplot(data, aes(x = as.factor(age), y = height, fill = gender)) + 
+  geom_boxplot() + 
+  labs(x = "Age", y = "Height", fill = "Gender") + 
+  ggtitle("Height Distribution by Age and Gender") 
+
+box_plot2 
+```
+
+[코드 2-8] for 함수를 이용한 반복문 예시 
+```{r}
+# 반복문으로 1에서 100까지 합해 출력하기  
+sum = 0 
+for (number in 1:100){ 
+  sum = sum + number 
+} 
+print(sum) 
+```
+
+

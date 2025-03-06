@@ -19,8 +19,8 @@ Question: R script or Rmd script?
 
 ```{r setup, include=FALSE} 
 # 작업 디렉토리 설정
-# knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file()) 
-# setwd("/active/taylor_s/people/ybae/RSC/singleCell_book/src"
+knitr::opts_knit$set(root.dir = getwd()) # 스크립크 위치를 작업 디렉토리로 설정
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file()) # 프로젝트를 작업 디렉토리로 설정
 ```
 
 # 데이터 설명 
@@ -42,21 +42,24 @@ TODO: window 단축키?
 install.packages("Seurat") 
 install.packages("dplyr") 
 install.packages("hdf5r")
+install.packages("BiocManager")
+BiocManager::install("glmGamPoi")
 
 # 패키지 불러오기  
 library(Seurat) 
 library(dplyr) 
 library(hdf5r)
+library(glmGamPoi)
 ```
 
 [코드 5-2] 2가지 방법으로 슈랏 오브젝트 생성하기
 ```{r}
 # [1] h5 파일 이용하기
-count_SRR13911909.h5 <- Read10X_h5("../data/count_SRR13911909/outs/filtered_feature_bc_matrix.h5")
+count_SRR13911909.h5 <- Read10X_h5("../../data/count_SRR13911909/outs/filtered_feature_bc_matrix.h5")
 SRR13911909.h5.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer")
 
 # [2] Market Exchange Format(MEX) 구조 폴더 이용하기 
-count_SRR13911909 <- Read10X(data.dir =  "../data/count_SRR13911909/outs/filtered_feature_bc_matrix/")
+count_SRR13911909 <- Read10X(data.dir =  "../../data/count_SRR13911909/outs/filtered_feature_bc_matrix/")
 SRR13911909.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909, project = "pbmc_alzheimer")
 ```
 
@@ -2289,8 +2292,9 @@ norm.cell.names="",output.seg="FLASE", plot.genes="TRUE",
 genome="hg20", n.cores=1)
 ```
 
-
+## scevan
 ```{r}
+# TODO 
 
 ```
 
