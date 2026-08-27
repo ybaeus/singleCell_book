@@ -59,6 +59,34 @@ the genome reference are too large to ship and must be downloaded.
 | Ch. 06 - Ch. 12 (the whole R workflow) | `src/singleCell_분석.Rmd` |
 | Ch. 12 CellBender (ambient RNA removal) | `src/CH12_run_cellbender.sh` |
 
+## Environment setup
+
+R and the tools the practice code needs can be set up in one go with pixi.
+See the official docs (pixi.sh) for how to install pixi itself.
+
+Create a `pixi.toml` at the top of the repository:
+
+```toml
+[project]
+name = "singleCell_book"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64", "osx-arm64"]
+
+[dependencies]
+r-base = "*"
+r-essentials = "*"
+```
+
+Then install the environment and start R inside it:
+
+```bash
+pixi install     # install the environment described in pixi.toml
+pixi run R       # start R inside that environment
+```
+
+R packages such as Seurat are installed by the chapter code itself: listing 6-1 for the
+core packages, and the install lines in each section of chapter 12 for the extra tools.
+
 ## Getting started
 
 1. **Data** - the tracked `h5` files let you start straight at Chapter 6. To build them from raw
