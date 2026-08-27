@@ -87,8 +87,8 @@ Code that is *not* in the book (scratch or reference material) is marked:
 
 - R and RStudio
 - Seurat v5 (see listing 6-1 in Chapter 6)
-- Cell Ranger 8.0.1 or newer (Chapter 5)
-- SRA-Toolkit 3.1.0 or newer (Chapter 4)
+- Cell Ranger 10.1.0 (the version used in Chapter 5)
+- SRA-Toolkit 3.2.1 (the version used in Chapter 4)
 - Human reference `refdata-gex-GRCh38-2024-A` (Chapter 5)
 
 ## Questions
