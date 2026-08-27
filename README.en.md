@@ -46,9 +46,9 @@ the genome reference are too large to ship and must be downloaded.
 | Book chapter | File |
 |--------------|------|
 | Ch. 02 R basics | `src/CH02_R.qmd`, `src/CH02_R.R` |
-| Ch. 04 Downloading sequencing data | `src/CH04_sra_download.sh`, `src/CH04_sra_download_multithread.sh` |
-| Ch. 05 Cell Ranger | `src/CH05_change_fastq_name.sh`, `src/CH05_run_cellranger.sh` |
-| Ch. 06 - Ch. 12 (the whole R workflow) | `src/singleCell_분석_기초편.Rmd` |
+| Ch. 04 Downloading sequencing data | `src/CH04_setup_sratoolkit.sh`, `src/CH04_sra_download.sh`, `src/CH04_sra_download_multithread.sh` |
+| Ch. 05 Cell Ranger | `src/CH05_setup_cellranger.sh`, `src/CH05_change_fastq_name.sh`, `src/CH05_run_cellranger.sh` |
+| Ch. 06 - Ch. 12 (the whole R workflow) | `src/singleCell_분석.Rmd` |
 | Ch. 12 CellBender (ambient RNA removal) | `src/CH12_run_cellbender.sh` |
 
 ## Getting started
@@ -64,7 +64,7 @@ the genome reference are too large to ship and must be downloaded.
    ```
 
 2. **R analysis** - open `singleCell.Rproj` in RStudio and work through
-   `src/singleCell_분석_기초편.Rmd`. Chunks follow the book's order.
+   `src/singleCell_분석.Rmd`. Chunks follow the book's order.
 
 ## Code numbering
 

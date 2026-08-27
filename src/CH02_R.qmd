@@ -35,7 +35,7 @@ BiocManager::version()
 BiocManager::install("Seurat") 
 ```
 
-[코드2-4] 예제 데이터 생성 코드 
+[코드 2-4] 예제 데이터 생성 코드 
 랜덤으로 100명의 성별, 나이 그리고 키를 생성하는 코드입니다. 
 ```{r}
 # 예제 데이터 생성하기 
@@ -63,7 +63,7 @@ write.csv(data, "data.csv")
 [코드 2-5] 예제 데이터 시각화 - 막대 그래프와 박스 그래프 
 ```{r}
 # 데이터 파일 읽기 
-# data <- read.csv("data.csv")  
+data <- read.csv("data.csv")  # CSV 파일을 읽어 데이터 프레임으로 저장하기
 
 # 조건에 따른 데이터 필터링하기 
 data[data$age < 13, ]                    # 나이(age)가 13세 미만인 행 추출하기 
@@ -111,12 +111,12 @@ box_plot2
 
 [코드 2-8] for 함수를 이용한 반복문 예시 
 ```{r}
-# 반복문으로 1에서 100까지 합해 출력하기  
-sum = 0 
+# 반복문으로 1부터 100까지 합해 출력하기 
+total <- 0 
 for (number in 1:100){ 
-  sum = sum + number 
+  total <- total + number 
 } 
-print(sum) 
+print(total) 
 ```
 
 

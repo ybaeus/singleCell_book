@@ -44,9 +44,9 @@ FASTQ 데이터와 참조서열은 용량이 크기 때문에 직접 내려받�
 | 책 챕터 | 파일 |
 |---------|------|
 | 챕터 02 단일세포 데이터 분석과 기본 코드 | `src/CH02_R.qmd`, `src/CH02_R.R` |
-| 챕터 04 시퀀싱 데이터 다운로드 | `src/CH04_sra_download.sh`, `src/CH04_sra_download_multithread.sh` |
-| 챕터 05 셀 레인저 설치 및 실행 | `src/CH05_change_fastq_name.sh`, `src/CH05_run_cellranger.sh` |
-| 챕터 06 ~ 챕터 12 (R 분석 전 과정) | `src/singleCell_분석_기초편.Rmd` |
+| 챕터 04 시퀀싱 데이터 다운로드 | `src/CH04_setup_sratoolkit.sh`, `src/CH04_sra_download.sh`, `src/CH04_sra_download_multithread.sh` |
+| 챕터 05 셀 레인저 설치 및 실행 | `src/CH05_setup_cellranger.sh`, `src/CH05_change_fastq_name.sh`, `src/CH05_run_cellranger.sh` |
+| 챕터 06 ~ 챕터 12 (R 분석 전 과정) | `src/singleCell_분석.Rmd` |
 | 챕터 12 CellBender (배경 RNA 제거) | `src/CH12_run_cellbender.sh` |
 
 ## 시작하기
@@ -61,7 +61,7 @@ FASTQ 데이터와 참조서열은 용량이 크기 때문에 직접 내려받�
    bash CH05_run_cellranger.sh        # 셀 레인저 카운트 실행
    ```
 
-2. **R 분석** - RStudio에서 `singleCell.Rproj` 를 열고 `src/singleCell_분석_기초편.Rmd` 를 실행합니다.
+2. **R 분석** - RStudio에서 `singleCell.Rproj` 를 열고 `src/singleCell_분석.Rmd` 를 실행합니다.
    코드 블록은 책의 챕터 순서대로 배치되어 있습니다.
 
 ## 코드 번호 규칙
