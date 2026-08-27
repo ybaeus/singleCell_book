@@ -48,11 +48,9 @@ FASTQ 원시 데이터와 참조서열은 용량이 크기 때문에 직접 내�
 |---------|------|
 | 챕터 02 단일세포 데이터 분석과 기본 코드 | `src/CH02_R.qmd`, `src/CH02_R.R` |
 | 챕터 04 시퀀싱 데이터 다운로드 | `src/CH04_sra_download.sh`, `src/CH04_sra_download_multithread.sh` |
-| 챕터 05 셀 레인저 설치 및 실행 | `src/CH04_change_fastq_name.sh`, `src/CH04_run_cellranger.sh` |
+| 챕터 05 셀 레인저 설치 및 실행 | `src/CH05_change_fastq_name.sh`, `src/CH05_run_cellranger.sh` |
 | 챕터 06 ~ 챕터 12 (R 분석 전 과정) | `src/singleCell_분석_기초편.Rmd` |
 | 챕터 12 CellBender (배경 RNA 제거) | `src/CH12_run_cellbender.sh` |
-
-> 챕터 05 스크립트 두 개는 파일 이름이 아직 `CH04_` 로 시작합니다. `CH05_` 로 정리할 예정입니다.
 
 ### 시작하기
 
@@ -62,8 +60,8 @@ FASTQ 원시 데이터와 참조서열은 용량이 크기 때문에 직접 내�
    ```bash
    cd src
    bash CH04_sra_download.sh          # FASTQ 내려받기 (수 시간 이상 걸릴 수 있습니다)
-   bash CH04_change_fastq_name.sh     # 셀 레인저 형식으로 파일 이름 바꾸기
-   bash CH04_run_cellranger.sh        # 셀 레인저 카운트 실행
+   bash CH05_change_fastq_name.sh     # 셀 레인저 형식으로 파일 이름 바꾸기
+   bash CH05_run_cellranger.sh        # 셀 레인저 카운트 실행
    ```
 
 2. **R 분석** - RStudio에서 `singleCell.Rproj` 를 열고 `src/singleCell_분석_기초편.Rmd` 를 실행합니다.
@@ -144,11 +142,9 @@ the genome reference are too large to ship and must be downloaded.
 |--------------|------|
 | Ch. 02 R basics | `src/CH02_R.qmd`, `src/CH02_R.R` |
 | Ch. 04 Downloading sequencing data | `src/CH04_sra_download.sh`, `src/CH04_sra_download_multithread.sh` |
-| Ch. 05 Cell Ranger | `src/CH04_change_fastq_name.sh`, `src/CH04_run_cellranger.sh` |
+| Ch. 05 Cell Ranger | `src/CH05_change_fastq_name.sh`, `src/CH05_run_cellranger.sh` |
 | Ch. 06 - Ch. 12 (the whole R workflow) | `src/singleCell_분석_기초편.Rmd` |
 | Ch. 12 CellBender (ambient RNA removal) | `src/CH12_run_cellbender.sh` |
-
-> The two Chapter 5 scripts are still named `CH04_*`; they will be renamed to `CH05_*`.
 
 ### Getting started
 
@@ -158,8 +154,8 @@ the genome reference are too large to ship and must be downloaded.
    ```bash
    cd src
    bash CH04_sra_download.sh          # fetch FASTQ (can take many hours)
-   bash CH04_change_fastq_name.sh     # rename to the Cell Ranger convention
-   bash CH04_run_cellranger.sh        # run cellranger count
+   bash CH05_change_fastq_name.sh     # rename to the Cell Ranger convention
+   bash CH05_run_cellranger.sh        # run cellranger count
    ```
 
 2. **R analysis** - open `singleCell.Rproj` in RStudio and work through
