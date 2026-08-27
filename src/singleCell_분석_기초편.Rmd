@@ -9,14 +9,15 @@ output: html_document
 
 해당 스크립트는 "실전 단일세포 데이터 분석: 예제 코드와 데이터로 배우는 생물정보 분석 기술" 책에서 따라 할 수 있도록 제작된 실습 스크립트 '기초편' 입니다. 
 
-현재 보고 계시는 코드는 카운트 매트릭스 생성 후, 싱글셀 데이터 분석을 위해 슈랏을 이용한 기본 코드이며,조금 더 심화된 코드를 확인 하고 싶다면 singleCell_분석_고급편.Rmd 파일을 확인해주세요.
+현재 보고 계시는 코드는 카운트 매트릭스 생성 후, 싱글셀 데이터 분석을 위해 슈랏을 이용한 기본 코드입니다. 챕터 04(데이터 다운로드)와 챕터 05(셀 레인저)의 코드는 같은 폴더의 셸 스크립트(CH04_*.sh, CH05_*.sh)를 참고해주세요.
 
-각 코드블럭에 대한 자세한 설명은 책의 챕터 05부터 챕터 10까지를 참고바랍니다.
+각 코드블럭에 대한 자세한 설명은 책의 챕터 06부터 챕터 12까지를 참고바랍니다. 코드 블록 위의 [코드 X-Y] 번호는 책의 코드 번호와 같습니다.
 
 질문 사항이 있거나, 코드를 돌리는데 어려움이 있다면 github페이지에서 -> 'issue' 탭 -> 'New issue' 버튼을 클릭해서 작성해주시면 빠른 시일내에 답변드리겠습니다. 
 
 Question: R script or Rmd script? 
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r setup, include=FALSE} 
 # 작업 디렉토리 설정
 knitr::opts_knit$set(root.dir = getwd()) # 스크립크 위치를 작업 디렉토리로 설정
@@ -34,10 +35,10 @@ TODO: 데이터 구조 설명
 코드를 하이라이트 한 뒤 위쪽 'Run' 버튼을 클릭하거나 command + return 단축키를 이용해서 실행시킬 수 있습니다. 코드 블록 ```{r}``` 에 포함되는 코드들은 해당 블록의 삼각형 버튼을 클릭하면 한번에 실행됩니다. 
 TODO: window 단축키? 
 
-# Chapter 05 슈랏 오브젝트, 품질관리 및 필터링"
-## 5.1 슈랏 오브젝트 만들기 
-[코드 5-1] 필요한 패키지 설치 및 불러오기
-```{r}
+# Chapter 06 슈랏 오브젝트 생성 및 품질관리
+## 6.1 슈랏 오브젝트 만들기 
+[코드 6-1] 필요한 패키지 설치 및 불러오기
+```{r code6_1}
 # 필요한 패키지 설치  
 # 1
 install.packages("Seurat") 
@@ -54,8 +55,8 @@ library(hdf5r)
 library(glmGamPoi)
 ```
 
-[코드 5-2] 2가지 방법으로 슈랏 오브젝트 생성하기
-```{r}
+[코드 6-2] 2가지 방법으로 슈랏 오브젝트 생성하기
+```{r code6_2}
 # [1] h5 파일 이용하기
 count_SRR13911909.h5 <- Read10X_h5("../data/count_SRR13911909/outs/filtered_feature_bc_matrix.h5")
 SRR13911909.h5.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer")
@@ -67,7 +68,9 @@ SRR13911909.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909, project =
 
 (참고)[코드 5-3] 슈랏 오브젝트 생성 두 가지 방법의 시간 비교해보기  
 해당 코드 블럭을 한번에 실행시켜줘야 정확한 시간을 얻을 수 있습니다. 한번에 하이라이트 해서 실행시키거나, 코드 블록의 오른쪽 위 화살표 버튼을 이용해서 실행해주세요. 
-```{r}
+
+[코드 6-3] 슈랏 오브젝트 생성 두 가지 방법의 시간 비교하기
+```{r code6_3}
 # [1] h5 파일 이용하기
 start <- Sys.time() # 시작 시간 
 count_SRR13911909.h5 <- Read10X_h5("../data/count_SRR13911909/outs/filtered_feature_bc_matrix.h5")
@@ -81,8 +84,8 @@ SRR13911909.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909, project =
 print( Sys.time() - start )
 ```
 
-[코드 5-4] 모든 샘플을 슈랏 오브젝트로 변형하기 (최소 발현량, 발현 세포 임계값 적용)
-```{r}
+[코드 6-4] 모든 샘플을 슈랏 오브젝트로 변형하기(최소 발현량, 발현 세포 문턱값 적용)
+```{r code6_4}
 # 각 샘플의 카운트 메트릭스를 슈랏 오브젝트로 변환하기
 count_SRR13911909.h5 <- Read10X_h5("../data/count_SRR13911909/outs/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
 SRR13911909.h5.sobj <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
@@ -103,9 +106,14 @@ count_SRR13911914.h5 <- Read10X_h5("../data/count_SRR13911914/outs/filtered_feat
 SRR13911914.h5.sobj <- CreateSeuratObject(counts = count_SRR13911914.h5, project = "pbmc_alzheimer", min.cells = 3, min.features = 200)
 ```
 
-
-(심화)[코드 5-5] 많은 수의 샘플 변환을 for 구문를 이용해 한번에 실행하기
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
+SRR13911909.h5.sobj@
+```
+
+
+(심화)[코드 6-5] 많은 샘플 변환을 for 구문을 이용해 한 번에 실행하기
+```{r code6_5}
 # install.packages("stringr")
 library(stringr) # 문자열 데이터를 조작하고 분석하는 유용한 함수
 
@@ -133,8 +141,9 @@ seurat_objects_list
 ```
 
 
-(참고)[코드 5-6] 슈랏 오브젝트 둘러보기 
-```{r}
+## 6.2 슈랏 오브젝트 들여다보기
+(참고)[코드 6-6] 슈랏 오브젝트 둘러보기
+```{r code6_6}
 # 슈랏 오브젝트 출력하기
 SRR13911909.h5.sobj
 
@@ -163,19 +172,19 @@ SRR13911909.h5.sobj[["RNA"]]$counts
 # other: 슈랏 오브젝트 뒤에 @ 혹은 $을 입력 한 후 'tab'을 눌러서 어떤 데이터를 불러 올 수 있는지 확인해 보세요.
 ```
 
-## 5.2 품질관리(QC) 및 필터링
-[코드 5-7] SRR13911909 슈랏 오브젝트에 미토콘드리아 유전자 발현 비율 추가하기
-```{r}
+## 6.3 품질관리 및 필터링
+[코드 6-7] SRR13911909 슈랏 오브젝트에 미토콘드리아 유전자 발현 비율 추가하기
+```{r code6_7}
 SRR13911909.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911909.h5.sobj, pattern = "^MT-")
 ```
 
-[코드 5-8] SRR13911909 슈랏 오브젝트의 품질관리 바이올린 플롯 그리기
-```{r}
+[코드 6-8] SRR13911909 슈랏 오브젝트의 품질관리 바이올린 플롯 그리기
+```{r code6_8}
 VlnPlot(SRR13911909.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)	
 ```
 
-[코드 5-9] SRR13911909 슈랏 오브젝트의 품질관리 유전자 산포도 플롯 그리기
-```{r, fig.width = 6, fig.height= 6}
+[코드 6-9] SRR13911909 슈랏 오브젝트의 품질관리 유전자 산포도 플롯 그리기
+```{r code6_9, fig.width = 6, fig.height= 6}
 # 세포당 RNA 카운트와 발현된 고유 유전자 수의 상관 관계
 FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 
@@ -183,13 +192,23 @@ FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeatur
 FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent.mt")
 ```
 
-[코드 5-10] SRR13911909 슈랏 오브젝트 필터링하기
-```{r}
+(참고)[코드 6-10] scuttle::isOutlier()를 이용한 이상치 판별
+```{r code6_10}
+# 문턱값을 직접 정하는 대신 중앙값 절대 편차(MAD)를 기준으로 이상치를 자동 판별할 수 있습니다.
+# BiocManager::install("scuttle")
+input <- SRR13911909.h5.sobj[[]]
+mito_outlier <- scuttle::isOutlier(input$percent.mt, type="higher")
+ncount_outlier <- scuttle::isOutlier(input$nCount_RNA, type="both")
+nfeat_outlier <- scuttle::isOutlier(input$nFeature_RNA, type="both")
+```
+
+[코드 6-11] SRR13911909 슈랏 오브젝트 필터링하기
+```{r code6_11}
 SRR13911909.h5.sobj <- subset(SRR13911909.h5.sobj, subset = nFeature_RNA > 400 & nFeature_RNA < 3500 & percent.mt < 10)
 ```
 
-[코드 5-11] 필터링된 SRR13911909 슈랏 오브젝트의 품질 관리 플롯 그리기
-```{r}
+[코드 6-12] 필터링된 SRR13911909 슈랏 오브젝트의 품질관리 플롯 그리기
+```{r code6_12}
 # 바이올린 플롯
 VlnPlot(SRR13911909.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)	
 
@@ -198,8 +217,8 @@ FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeatur
 FeatureScatter(SRR13911909.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent.mt")
 ```
 
-[코드 5-12] 각 샘플에 미토콘드리아 발현 비율 추가
-```{r}
+[코드 6-13] 각 샘플에 미토콘드리아 발현율 추가하기
+```{r code6_13}
 SRR13911910.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911910.h5.sobj, pattern = "^MT-")
 SRR13911911.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911911.h5.sobj, pattern = "^MT-")
 SRR13911912.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911912.h5.sobj, pattern = "^MT-")
@@ -207,8 +226,8 @@ SRR13911913.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911913.h5.sobj,
 SRR13911914.h5.sobj[["percent.mt"]] <- PercentageFeatureSet(SRR13911914.h5.sobj, pattern = "^MT-")
 ```
 
-[코드 5-13] QC 시각화 하기 – 바이올린 플롯 
-```{r}
+[코드 6-14] 품질관리 시각화하기 – 바이올린 플롯
+```{r code6_14}
 VlnPlot(SRR13911910.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
 VlnPlot(SRR13911911.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
 VlnPlot(SRR13911912.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
@@ -216,8 +235,8 @@ VlnPlot(SRR13911913.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent
 VlnPlot(SRR13911914.h5.sobj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
 ```
 
-[코드 5-14] QC 시각화 하기 – 유전자 산포도 
-```{r, fig.width = 6, fig.height= 6}
+[코드 6-15] 품질관리 시각화하기 – 유전자 산포도
+```{r code6_15, fig.width = 6, fig.height= 6}
 # 세포당 RNA 카운트와 발현된 고유 유전자 수의 상관 관계  
 FeatureScatter(SRR13911910.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 # 세포당 RNA 카운트와 미토콘드리아 발현 비율 상관 관계
@@ -233,8 +252,9 @@ FeatureScatter(SRR13911914.h5.sobj, feature1 = "nCount_RNA", feature2 = "nFeatur
 FeatureScatter(SRR13911914.h5.sobj, feature1 = "nCount_RNA", feature2 = "percent.mt")
 ```
 
-[코드 5-15] 각 샘플들의 품질관리 플롯들을 이용해서 필터링하기 
-```{r}
+[코드 6-16] 각 샘플 슈랏 오브젝트 필터링하기
+```{r code6_16}
+SRR13911909.h5.sobj <- subset(SRR13911909.h5.sobj, subset = nFeature_RNA > 400 & nFeature_RNA < 3500 & percent.mt < 10)
 SRR13911910.h5.sobj <- subset(SRR13911910.h5.sobj, subset = nFeature_RNA > 400 & nFeature_RNA < 3500 & percent.mt < 10)
 SRR13911911.h5.sobj <- subset(SRR13911911.h5.sobj, subset = nFeature_RNA > 400 & nFeature_RNA < 3500 & percent.mt < 10)
 SRR13911912.h5.sobj <- subset(SRR13911912.h5.sobj, subset = nFeature_RNA > 400 & nFeature_RNA < 3500 & percent.mt < 10)
@@ -242,8 +262,8 @@ SRR13911913.h5.sobj <- subset(SRR13911913.h5.sobj, subset = nFeature_RNA > 400 &
 SRR13911914.h5.sobj <- subset(SRR13911914.h5.sobj, subset = nFeature_RNA > 400 & nFeature_RNA < 3500 & percent.mt < 10)
 ```
 
-(심화) [코드 5-16] lapply를 이용하여 한번에 미트콘드리아 유전자 발현 비율 계산 및 필터링하기
-```{r}
+(심화) [코드 6-17] lapply를 이용하여 한 번에 미토콘드리아 유전자 발현 비율 계산 및 필터링하기
+```{r code6_17}
 seurat_objects_list <- lapply(seurat_objects_list, function(sobj) {  
     sobj <- sobj %>%  
         PercentageFeatureSet(pattern = "^MT-", col.name = "percent.mt") %>%  
@@ -252,11 +272,13 @@ seurat_objects_list <- lapply(seurat_objects_list, function(sobj) {
 ```
 
 
-# Chapter 06 데이터 정규화 및 통합
-## 6.1 로그정규화 이용 
+# Chapter 07 데이터 전처리(정규화 및 통합)
+## 7.1 로그 정규화 이용 
 [코드 6-1] 각 샘플별 로그 정규화 실행하기
 _NormalizeData()_: https://satijalab.org/seurat/reference/normalizedata 
-```{r}
+
+[코드 7-1] 각 샘플별 로그 정규화 실행하기
+```{r code7_1}
 SRR13911909.h5.sobj_norm <- NormalizeData(SRR13911909.h5.sobj, verbose = TRUE) 
 SRR13911910.h5.sobj_norm <- NormalizeData(SRR13911910.h5.sobj, verbose = FALSE)
 SRR13911911.h5.sobj_norm <- NormalizeData(SRR13911911.h5.sobj, verbose = FALSE)
@@ -264,14 +286,15 @@ SRR13911912.h5.sobj_norm <- NormalizeData(SRR13911912.h5.sobj, verbose = FALSE)
 SRR13911913.h5.sobj_norm <- NormalizeData(SRR13911913.h5.sobj, verbose = FALSE)
 SRR13911914.h5.sobj_norm <- NormalizeData(SRR13911914.h5.sobj, verbose = FALSE)
 ```
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r fig.width = 8}
 hist(colSums(SRR13911909.h5.sobj_norm@assays$RNA$counts[1:1000,]), breaks = 100)
 hist(colSums(SRR13911909.h5.sobj_norm@assays$RNA$data[1:1000,]), breaks = 100)
 ```
 
 
-[코드 6-2] 각 샘플별 고변이 유전자 추출하기
-```{r}
+[코드 7-2] 각 샘플별 고변이 유전자 추출하기
+```{r code7_2}
 SRR13911909.h5.sobj_norm <- FindVariableFeatures(SRR13911909.h5.sobj_norm, selection.method = "vst", nfeatures = 2000, verbose = TRUE)
 SRR13911910.h5.sobj_norm <- FindVariableFeatures(SRR13911910.h5.sobj_norm, selection.method = "vst", nfeatures = 2000, verbose = FALSE)
 SRR13911911.h5.sobj_norm <- FindVariableFeatures(SRR13911911.h5.sobj_norm, selection.method = "vst", nfeatures = 2000, verbose = FALSE)
@@ -283,8 +306,8 @@ SRR13911914.h5.sobj_norm <- FindVariableFeatures(SRR13911914.h5.sobj_norm, selec
 VariableFeatures(SRR13911909.h5.sobj_norm)[1:10]
 ```
 
-[코드 6-3] 각 샘플별 선택된 고변이 유전자들에 대해 스케일링하기
-```{r}
+[코드 7-3] 각 샘플별로 선택된 고변이 유전자를 스케일링하기
+```{r code7_3}
 SRR13911909.h5.sobj_norm <- ScaleData(SRR13911909.h5.sobj_norm, verbose = TRUE) 
 SRR13911910.h5.sobj_norm <- ScaleData(SRR13911910.h5.sobj_norm, verbose = FALSE)
 SRR13911911.h5.sobj_norm <- ScaleData(SRR13911911.h5.sobj_norm, verbose = FALSE)
@@ -293,13 +316,13 @@ SRR13911913.h5.sobj_norm <- ScaleData(SRR13911913.h5.sobj_norm, verbose = FALSE)
 SRR13911914.h5.sobj_norm <- ScaleData(SRR13911914.h5.sobj_norm, verbose = FALSE)
 ```
 
-[코드 6-4] 정규화된 슈랏 오브젝트들을 하나의 리스트로 묶기 
-```{r}
+[코드 7-4] 정규화된 슈랏 오브젝트들을 하나의 리스트로 묶기
+```{r code7_4}
 lognorm_list <- c(SRR13911909.h5.sobj_norm, SRR13911910.h5.sobj_norm, SRR13911911.h5.sobj_norm, SRR13911912.h5.sobj_norm, SRR13911913.h5.sobj_norm, SRR13911914.h5.sobj_norm)
 ```
 
-(심화)[코드 6-5] 코드 6-1 부터 6-4까지를 함축한 명령어
-```{r}
+(심화)[코드 7-5] 코드 7-1부터 7-4까지를 함축한 명령어
+```{r code7_5}
 # 모든 샘플 정규화하고 하나의 리스트로 묶기
 lognorm_list <- lapply(seurat_objects_list, function(x) {
   x <- NormalizeData(x)
@@ -308,6 +331,7 @@ lognorm_list <- lapply(seurat_objects_list, function(x) {
 })
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # TODO 
 # raw 데이터 
@@ -321,6 +345,7 @@ lognorm_list <- lapply(seurat_objects_list, function(x) {
 # SRR13911909.h5.sobj_norm[["RNA"]]$data[1:5,]
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # TODO 
 # 2024 to demo merged without integration -> batch effect 
@@ -368,10 +393,12 @@ lognorm_list <- lapply(seurat_objects_list, function(x) {
 # )
 ```
 
-## 6.2 SCTranfrom 정규화 이용
+## 7.2 SCTransform 정규화 이용
 [코드 6-6] SCTransform 정규화 실행하기
 _SCTransform()_: https://satijalab.org/seurat/reference/sctransform 
-```{r}
+
+[코드 7-6] SCTransform 정규화 실행하기
+```{r code7_6}
 options(future.globals.maxSize = 100 * 1024^3)  # 1000=1GB
 SRR13911909.h5.sobj_SCT <- SCTransform(SRR13911909.h5.sobj, vars.to.regress = "percent.mt", verbose = TRUE) 
 SRR13911910.h5.sobj_SCT <- SCTransform(SRR13911910.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
@@ -381,8 +408,8 @@ SRR13911913.h5.sobj_SCT <- SCTransform(SRR13911913.h5.sobj, vars.to.regress = "p
 SRR13911914.h5.sobj_SCT <- SCTransform(SRR13911914.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
 ```
 
-[코드 6-7] 활성화된 에세이 변경하기
-```{r}
+[코드 7-7] 활성화된 에세이 변경하기
+```{r code7_7}
 # "RNA"를 활성화된 에세이로 지정하기 
 DefaultAssay(SRR13911909.h5.sobj_SCT) <- "RNA"
 
@@ -391,15 +418,15 @@ DefaultAssay(SRR13911909.h5.sobj_SCT) <- "SCT"
 ```
 
 
-## 6.3 데이터 통합 
+## 7.3 데이터 통합 
 
-[코드 6-8] 여러 개의 슈랏 오브젝트를 하나의 리스트로 묶기 
-```{r}
+[코드 7-8] 여러 개의 슈랏 오브젝트를 하나의 리스트로 묶기
+```{r code7_8}
 pbmc_alzheimer_SCT.list <- list(SRR13911909.h5.sobj_SCT, SRR13911910.h5.sobj_SCT, SRR13911911.h5.sobj_SCT, SRR13911912.h5.sobj_SCT, SRR13911913.h5.sobj_SCT, SRR13911914.h5.sobj_SCT)
 ```
 
-(참고)[코드 6-9] 오브젝트 저장 및 불러오기
-```{r}
+(참고)[코드 7-9] 오브젝트 저장 및 불러오기
+```{r code7_9}
 # 오브젝트 저장 
 saveRDS(pbmc_alzheimer_SCT.list, "./rds/pbmc_alzheimer_SCT.list.rds")
 
@@ -407,8 +434,8 @@ saveRDS(pbmc_alzheimer_SCT.list, "./rds/pbmc_alzheimer_SCT.list.rds")
 pbmc_alzheimer_SCT.list <- readRDS("./rds/pbmc_alzheimer_SCT.list.rds")
 ```
 
-(참고)[코드 6-10] 오브젝트 삭제 및 메모리 정리 예시 
-```{r}
+(참고)[코드 7-10] 오브젝트 삭제 및 메모리 정리 예시
+```{r code7_10}
 # 불필요한 오브젝트 삭제  
 rm(SRR13911909.h5.sobj_SCT) 
  
@@ -417,21 +444,22 @@ gc()
 ```
 
 
-(참고) [코드 6-11] 필요 없는 오브젝트들 일부 정리 
-```{r}
+(참고) [코드 7-11] 필요 없는 오브젝트들 일부 정리
+```{r code7_11}
 rm(count_SRR13911909.h5, count_SRR13911910.h5, count_SRR13911911.h5, count_SRR13911912.h5, count_SRR13911913.h5, count_SRR13911914.h5)
 rm(SRR13911909.h5.sobj_ori, SRR13911909.h5.sobj, SRR13911910.h5.sobj, SRR13911911.h5.sobj, SRR13911912.h5.sobj, SRR13911913.h5.sobj, SRR13911914.h5.sobj)
 rm(SRR13911909.h5.sobj_norm, SRR13911910.h5.sobj_norm, SRR13911911.h5.sobj_norm, SRR13911912.h5.sobj_norm, SRR13911913.h5.sobj_norm, SRR13911914.h5.sobj_norm)
 
 gc()
 ```
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # sct09_sd<- pbmc_alzheimer_SCT.list[[1]]@assays$SCT$scale.data
 ```
 
 
-[코드 6-12] SCT 정규화된 샘플들을 앵커를 이용하여 CCA방법으로 통합하기
-```{r}
+[코드 7-12] SCT 정규화된 샘플들을 앵커를 이용하여 CCA 방법으로 통합하기
+```{r code7_12}
 # 샘플 간의 공통 유전자 찾기
 features <- SelectIntegrationFeatures(object.list = pbmc_alzheimer_SCT.list, nfeatures = 3000) 
 pbmc_alzheimer_SCT.list <- PrepSCTIntegration(object.list = pbmc_alzheimer_SCT.list, anchor.features = features) 
@@ -450,13 +478,14 @@ saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT_CCA.rds")
 pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT_CCA.rds")
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # sct09_sd_afterprep <- pbmc_alzheimer_SCT.list[[1]]@assays$SCT$scale.data
 # identical(rownames(sct09_sd), rownames(sct09_sd_afterprep)) # FALSE 
 ```
 
-(참고) [코드 6-13] R 환경 메모리 할당량 늘리기 
-```{r}
+(참고) [코드 7-13] R 환경 메모리 할당량 늘리기
+```{r code7_13}
 # usethis 패키기 설치 및 불러오기
 Install.packages("usethis")
 library(usethis)
@@ -466,6 +495,7 @@ usethis::edit_r_environ() # 해당 코드를 실행하면 R 환경 설정 파일
 ```
 
 (참고)[코드 6-14] future 패키지를 이용한 병렬 처리 설정
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # future 패키지 설치 및 불러오기  
 install.packages("future") 
@@ -480,6 +510,7 @@ options(future.globals.maxSize = 800000 * 1024^2)  # 8000=8GB
 ```
 
 (예시) 앵커 들여다보기
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # 앵커 확인 
 pbmc_alzheimer_SCT.anchors
@@ -493,6 +524,7 @@ pbmc_alzheimer_SCT.combined[["integrated"]]$data[1:5, 1:5]
 pbmc_alzheimer_SCT.combined[["integrated"]]$scale.data[1:5, 1:5]
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 ## ??
 merged_sobj <- merge(SRR13911909.h5.sobj_norm, 
@@ -521,6 +553,7 @@ merged_sobj_integrated <- IntegrateLayers(
 # Error in names(groups) <- "group" : attempt to set an attribute on NULL
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 ## ??
 merged_sobj <- merge(SRR13911909.h5.sobj_norm, y = c(SRR13911910.h5.sobj_norm, SRR13911911.h5.sobj_norm, SRR13911912.h5.sobj_norm, SRR13911913.h5.sobj_norm, SRR13911914.h5.sobj_norm))
@@ -532,33 +565,37 @@ job::job({merged_sobj <- RunPCA(merged_sobj, verbose = FALSE) %>%
 ```
 
 
-# Chapter 07 차원 축소 및 클러스터링
+# Chapter 08 차원 축소 및 클러스터링
 SCTransform 정규화 및 CCA 통합 된 pbmc_alzheimer_SCT.combined로 이어서 진행합니다. 
   - _RunPCA()_: PCA on the scaled data
   - _RunUMAP()_
   - _FindNeighbors()_
   - _FindClusters()_ 
 
-## 7.1 선형 차원 축소 - 주성분 분석
-[코드 7-1] PCA 계산 및 시각화
-```{r}
-# pca 실행
-pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = TRUE)
+## 8.1 선형 차원 축소 - 주성분 분석
+[코드 8-1] PCA 계산 및 시각화
+```{r code8_1}
+# 주성분 실행하기
+pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = T)
 
-# pca 시각화
+# 주성분 시각화하기
+DimPlot(pbmc_alzheimer_SCT.combined, reduction = "pca")
+
+# (참고) 다른 주성분 조합으로 보기
 DimPlot(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = c(2,4))
 ```
 
-[코드 7-2] PCA 엘보우 플롯 시각화 (주성분 50개) 
-```{r}
+[코드 8-2] PCA 엘보 플롯 시각화(주성분 50개)
+```{r code8_2}
 ElbowPlot(pbmc_alzheimer_SCT.combined, ndims = 50, reduction = 'pca')
 ```
 
-[코드 7-3] 주성분별(PC1-PC9) 히트맵 시각화
-```{r, fig.height = 10, fig.width=10}
+[코드 8-3] 주성분별(PC1~PC9) 히트맵 시각화
+```{r code8_3, fig.height = 10, fig.width=10}
 DimHeatmap(pbmc_alzheimer_SCT.combined, dims = 1:9, cells = 500, balanced = TRUE) 
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{R}
 # testing? 
 # Idents(pbmc_alzheimer_SCT.combined) <-  "orig.ident"
@@ -570,10 +607,10 @@ DimHeatmap(pbmc_alzheimer_SCT.combined, dims = 25:30, cells = 500, balanced = TR
 # dev.off()
 ```
 
-## 7.2 비선형 차원 축소 - t-SNE/UMAP
+## 8.2 비선형 차원 축소 - t-SNE/UMAP
 
-[코드 7-4] t-SNE 계산 및 시각화
-```{r}
+[코드 8-4] t-SNE 계산 및 시각화
+```{r code8_4}
 # tsne 실행
 pbmc_alzheimer_SCT.combined <- RunTSNE(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:30, verbose = F)
 
@@ -581,8 +618,14 @@ pbmc_alzheimer_SCT.combined <- RunTSNE(pbmc_alzheimer_SCT.combined, reduction = 
 DimPlot(pbmc_alzheimer_SCT.combined, reduction = "tsne")
 ```
 
-[코드 7-5] UMAP 계산 및 시각화 
-```{r}
+(참고)[코드 8-5] 난수 생성 숫자 지정하기
+```{r code8_5}
+# 난수 생성 변수를 42로 지정하기
+set.seed(42)
+```
+
+[코드 8-6] UMAP 계산 및 시각화
+```{r code8_6}
 # umap 실행
 pbmc_alzheimer_SCT.combined <- RunUMAP(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:30, verbose = FALSE)
 
@@ -591,27 +634,32 @@ DimPlot(pbmc_alzheimer_SCT.combined, reduction = "umap")
 ```
 
 
-## 7.3 클러스터링 
-[코드 7-5] 클러스터링
-```{r}
+## 8.3 클러스터링 
+[코드 8-7] 클러스터링하기
+```{r code8_7}
 pbmc_alzheimer_SCT.combined <- FindNeighbors(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:30)
 pbmc_alzheimer_SCT.combined <- FindClusters(pbmc_alzheimer_SCT.combined, resolution = c(0.1,0.3, 0.5))
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT_CCA_UMAP.rds")
+pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT_CCA_UMAP.rds")
+DimPlot(pbmc_alzheimer_SCT.combined, reduction = "tsne", group.by = "orig.ident")
+pbmc_alzheimer_SCT.combined$orig.ident
 ```
 
 
 (심화)[코드 7-6] 차원축소 및 클러스터링 한번에 진행하기 
-[코드 7-1]부터 [코드 7-5]까지 한번에 실행하는 코드입니다. 
-```{r}
+[코드 8-8] 차원축소 및 클러스터링 한번에 진행하기
+```{r code8_8}
 pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = FALSE) %>%
   RunUMAP(., reduction = "pca", dims = 1:30, verbose = FALSE) %>%
   FindNeighbors(., reduction = "pca", dims = 1:30) %>% 
   FindClusters(., resolution = c(0.1, 0.3, 0.5))
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # Computing nearest neighbor graph
 # Computing SNN
@@ -654,36 +702,39 @@ pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = FAL
 ```
 
 
-[코드 7-7] UMAP 시각화 
-```{r}
+[코드 8-9] UMAP 시각화하기
+```{r code8_9}
 # pdf("./results/UMAP_integrated_snn_res.0.1_0.3_0.5.pdf", width = 10)
 Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.1"
-DimPlot(pbmc_alzheimer_SCT.combined, label = T, reduction = "umap")
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "umap")
 
 Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.3"
-DimPlot(pbmc_alzheimer_SCT.combined, label = T, reduction = "umap")
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "umap")
 
 Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.5"
-DimPlot(pbmc_alzheimer_SCT.combined, label = T, reduction = "umap")
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "umap")
 # dev.off()
 ```
 
-[코드 7-8] TSNE 시각화 
-```{r}
+[코드 8-10] t-SNE 시각화하기
+```{r code8_10}
 # pdf("./results/TSNE_integrated_snn_res.0.1_0.3_0.5.pdf", width = 10)
 Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.1"
-DimPlot(pbmc_alzheimer_SCT.combined, label = T, reduction = "tsne")
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "tsne")
 
 Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.3"
-DimPlot(pbmc_alzheimer_SCT.combined, label = T, reduction = "tsne")
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "tsne")
 
 Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.5"
-DimPlot(pbmc_alzheimer_SCT.combined, label = T, reduction = "tsne")
+DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "tsne")
 # dev.off()
 ```
 
 
-# Chapter 08 배치 효과 교정 
+# Chapter 09 배치 효과 및 데이터 통합
+## 9.1 배치 효과
+
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # test 1
 lognorm_list_processed <- lapply(lognorm_list, function(sobj) {  
@@ -708,19 +759,19 @@ lognorm_list_processed_merged <- scCustomixe::Merge_Seurat_List(
 # then run dimension reduction 
 ```
 
-[코드 8-1] 배치 효과 교정 없이 슈랏 오브젝트들 합치기
-```{r}
+[코드 9-1] 배치 효과 교정 없이 슈랏 오브젝트 이어 붙이기
+```{r code9_1}
 SCT_merged <- merge(SRR13911909.h5.sobj_SCT,  y = c(SRR13911910.h5.sobj_SCT,SRR13911911.h5.sobj_SCT, SRR13911912.h5.sobj_SCT,SRR13911913.h5.sobj_SCT,SRR13911914.h5.sobj_SCT), project = "pbmc_alzheimer")
 ```
 
-(참고)[코드 8-2] 배치 효과 교정 없이 슈랏 오브젝트들 합치기 - 샘플 이름 이용 
-```{r}
+(참고)[코드 9-2] 배치 효과 교정 없이 슈랏 오브젝트들 합치기 - 샘플 이름 이용
+```{r code9_2}
 SCT_merged_named <- merge(SRR13911909.h5.sobj_SCT, y = c(SRR13911910.h5.sobj_SCT), add.cell.ids = c("SRR13911909", "SRR13911910"), project = "pbmc_alzheimer")
 ```
 
-[코드 8-3] 배치 효과 교정 없이 합쳐진 슈랏 오브젝트 차원 축소 및 클러스터링
-```{r}
-# [코드 6-12] 에서 구한 공통 유전자 3000개 이용 
+[코드 9-3] 배치 효과 교정 없이 합쳐진 슈랏 오브젝트 차원 축소
+```{r code9_3}
+# [코드 7-12] 에서 구한 공통 유전자 3,000개 이용 
 VariableFeatures(SCT_merged) <- features
 
 # 차원 축소 및 클러스터링 
@@ -732,8 +783,8 @@ job::job({saveRDS(SCT_merged, "./rds/SCT_merged.rds")})
 ```
 
 
-[코드 8-4] 메타 데이터 추가하기 - 배치 효과 교정 없이 합쳐진 슈랏 오브젝트
-```{r}
+[코드 9-4] 메타데이터 추가하기 - 배치 효과 교정 없이 합쳐진 슈랏 오브젝트
+```{r code9_4}
 # 메타 데이터에 샘플 이름 추가하기, 'Run' 컬럼 
 SCT_merged@meta.data <- SCT_merged@meta.data %>%
   mutate(Run = ifelse(grepl("_1", rownames(.)), "SRR13911909", 
@@ -753,8 +804,8 @@ SCT_merged@meta.data[c("Run", "AGE", "subject_status")] <-
   metadata_subset[match(SCT_merged$Run, metadata_subset$Run), ]
 ```
 
-[코드 8-5] 메타 데이터 추가하기 - 배치 효과 교정된 슈랏 오브젝트
-```{r}
+[코드 9-5] 메타데이터 추가하기 - 배치 효과 교정된 슈랏 오브젝트
+```{r code9_5}
 # 메타 데이터에 샘플 이름 추가하기, 'Run' 컬럼 
 pbmc_alzheimer_SCT.combined@meta.data <- pbmc_alzheimer_SCT.combined@meta.data %>%
   mutate(Run = ifelse(grepl("_1", rownames(.)), "SRR13911909", 
@@ -770,14 +821,37 @@ pbmc_alzheimer_SCT.combined@meta.data[c("Run", "AGE", "subject_status")] <-
   metadata_subset[match(pbmc_alzheimer_SCT.combined$Run, metadata_subset$Run), ]
 ```
 
-```{r}
-add_sample_name <- function(sobj, names){
+[코드 9-6] 함수 이용하기 예시 - 메타데이터 추가
+```{r code9_6}
+# 메타 데이터 추가 함수 
+add_sample_name <- function(sobj, sample_metadata, adding_column_names){
+  # 샘플 이름 추가 
+  sobj@meta.data <- sobj@meta.data %>%
+    mutate(Run = ifelse(grepl("_1", rownames(.)), "SRR13911909", 
+                              ifelse(grepl("_2", rownames(.)), "SRR13911910",
+                                     ifelse(grepl("_3", rownames(.)), "SRR13911911",
+                                            ifelse(grepl("_4", rownames(.)), "SRR13911912",
+                                                   ifelse(grepl("_5", rownames(.)), "SRR13911913",
+                                                          ifelse(grepl("_6", rownames(.)), "SRR13911914", "NA")))))))
+  
+  # 필요한 메타데이터 추가
+  sobj@meta.data[adding_column_names] <-
+    sample_metadata[match(sobj$Run, sample_metadata$Run), ]
+  
+  return(sobj)
 }
+
+# 샘플 메타데이터 읽기 
+metadata <- read.csv("../data/SraRunTable.csv")
+
+# 특정 오브젝트에 필요한 메타 데이터 추가하기 
+SCT_merged <- add_sample_name(SCT_merged, metadata, c("Run", "AGE", "subject_status"))
+pbmc_alzheimer_SCT.combined <- add_sample_name(pbmc_alzheimer_SCT.combined, metadata, c("Run", "AGE", "subject_status"))
 ```
 
 
-[코드 8-6] 배치 효과 확인을 위한 UMAP & TSNE 시각화 
-```{r fig.width = 13}
+[코드 9-7] 배치 효과 확인을 위한 UMAP 및 t-SNE 시각화
+```{r code9_7, fig.width = 13}
 # 배치 교정 없이 합쳐진 슈랏 오브젝트 
 Idents(SCT_merged) <-  SCT_merged@meta.data[["Run"]]
 DimPlot(SCT_merged, pt.size = 0.01, reduction = "umap")
@@ -789,11 +863,12 @@ DimPlot(pbmc_alzheimer_SCT.combined, pt.size = 0.01, reduction = "umap")
 DimPlot(pbmc_alzheimer_SCT.combined, pt.size = 0.01, reduction = "tsne") 
 ```
 
-[코드 8-7] 샘플별로 나눠서 UMAP 그리기
-```{r}
+[코드 9-8] 샘플별로 나눠서 UMAP 그리기
+```{r code9_8}
 DimPlot(pbmc_alzheimer_SCT.combined, reduction = "umap", split.by = "Run")
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 #2024.02.01 try other integration on SCT
 dim(pbmc_alzheimer_SCT.combined@reductions$integrated.cca@cell.embeddings)
@@ -813,8 +888,10 @@ pbmc_alzheimer_SCT.combined@assays$integrated$scale.data[1:5,1:5]
 dim(pbmc_alzheimer_SCT.combined@assays$SCT@scale.data) # 2000, 74134
 ```
 
-[코드 8-8] 하모니 방법을 이용한 배치 효과 교정 및 데이터 통합  
-```{r}
+## 9.2 배치 효과 교정
+
+[코드 9-9] 하모니를 이용한 배치 효과 교정 및 데이터 통합
+```{r code9_9}
 # 하모니 설치
 install.packages("harmony")
 
@@ -828,8 +905,8 @@ SCT_merged <- IntegrateLayers(
 )
 ```
 
-[코드 8-9] 배치효과 확인 - 하모니로 교정 된 슈랏 오브젝트  
-```{r fig.width = 15}
+[코드 9-10] 배치 효과 확인 - 하모니로 교정된 슈랏 오브젝트
+```{r code9_10, fig.width = 15}
 # 클러스터링 및 UMAP 차원 축소 
 SCT_merged <- FindNeighbors(SCT_merged, reduction = "integrated.harmony", dims = 1:30, verbose = F) %>%
   FindClusters(., resolution = 0.3, cluster.name = "harmony_clusters", verbose =F) %>%
@@ -839,11 +916,13 @@ SCT_merged <- FindNeighbors(SCT_merged, reduction = "integrated.harmony", dims =
 DimPlot(SCT_merged, pt.size = 0.01, group.by = "Run", reduction = "umap.sct.harmony")
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # identical(SCT_merged@assays$SCT@counts, sobj_SCT@assays$SCT@counts) # TRUE
 # identical(SCT_merged@assays$SCT@data, sobj_SCT@assays$SCT@data) # TRUE
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # # RPMC 통합 
 # SCT_merged <- IntegrateLayers( 
@@ -861,8 +940,8 @@ DimPlot(SCT_merged, pt.size = 0.01, group.by = "Run", reduction = "umap.sct.harm
 ```
 
 
-[코드 8-11] 로그 정규화환 샘플들에대한 통합된 표현 공간 생성 및 시각화
-```{r}
+[코드 9-11] 로그 정규화한 샘플들의 통합된 표현 공간 생성 및 시각화
+```{r code9_11}
 # 로그 정규화 된 샘플들을 하나의 오브젝트로 합치기  
 Lognorm_merged <- merge(SRR13911909.h5.sobj_norm, y= c(SRR13911910.h5.sobj_norm, SRR13911911.h5.sobj_norm, SRR13911912.h5.sobj_norm, SRR13911913.h5.sobj_norm, SRR13911914.h5.sobj_norm))
 
@@ -893,6 +972,7 @@ https://satijalab.org/seurat/articles/seurat5_integration
 
 UMAP 상에서 integration 이 된것 같으면 JoinLayers() 함수를 실행해서 실제 카운트를 합쳐 새로운 counts 와 data 레이어를 만들어 낼 수 있습니다. 
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 DefaultAssay(obj) <- "RNA" # integrated didn't work for IntegrateLayers, SCT also doesn't work 
 obj[["RNA"]] <- JoinLayers(obj[["RNA"]])
@@ -909,9 +989,10 @@ obj[["RNA"]]$count # 24164 x 74134
 ```
 
 
-# Chapter 09 세포 유형 주석
-## 9.1 세포 특정 마커 이용
+# Chapter 10 세포 유형 주석
+## 10.1 마커 유전자 기반 접근
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # sanity check
 pbmc_alzheimer_SCT_CCA_UMAP <- readRDS("./rds/pbmc_alzheimer_SCT_CCA_UMAP.rds")
@@ -936,13 +1017,14 @@ identical(pbmc_alzheimer_SCT_CCA_UMAP@assays$SCT@scale.data,
           pbmc_alzheimer_SCT.combined@assays$SCT@scale.data) # TRUE 
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT_CCA_UMAP.rds")
 ```
 
 
-[코드 9-1] 각 클러스터의 마커 찾기
-```{r}
+[코드 10-1] 각 클러스터의 마커 유전자 후보 추출 및 저장
+```{r code10_1}
 # 카운트값 재보정
 pbmc_alzheimer_SCT.combined <- PrepSCTFindMarkers(object = pbmc_alzheimer_SCT.combined)
 saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT_CCA_UMAP_prepSCT.rds")
@@ -960,8 +1042,8 @@ job::job({
 saveRDS(markers, "./rds/pbmc_alzheimer_SCT_CCA_UMAP_markers_res_0.3.rds")
 ```
 
-[코드 9-2] 클러스터별 유의미한 상위 20개 마커 추출
-```{r}
+[코드 10-2] 클러스터별 유의미한 상위 20개 마커 추출하기
+```{r code10_2}
 # 각 클러스터별 유의미한 마커 추출하기  
 markers_select <- markers %>%
     group_by(cluster) %>%       # 클러스터별로 그룹화
@@ -978,8 +1060,8 @@ markers_select %>%
 top20[top20$cluster == 0, ]$gene
 ```
 
-[코드 9-3] 알려진 마커들을 이용해서 세포 유형 주석 달기 
-```{r}
+[코드 10-3] 알려진 마커들을 이용해서 클러스터의 세포 유형 알아내기
+```{r code10_3}
 # 논문에서 주어진 세포 유형 별 마커들 
 paper_markers <- list(
   B_cell = c("CD19", "MS4A1"),
@@ -1012,8 +1094,8 @@ results_matrix <- t(sapply(results, unlist))
 results_matrix
 ```
 
-[코드 9-4] 각 세포의 세포 유형을 추정하고 이를 슈랏 오브젝트에 추가하기 
-```{r}
+[코드 10-4] 각 세포의 세포 유형을 추정하고 이를 슈랏 오브젝트에 추가하기
+```{r code10_4}
 # 세포 유형 결정 함수
 determine_cell_type <- function(cluster_scores) {
   if (all(cluster_scores == 0)) {
@@ -1041,21 +1123,25 @@ pbmc_alzheimer_SCT.combined <- AddMetaData(pbmc_alzheimer_SCT.combined, metadata
 head(pbmc_alzheimer_SCT.combined@meta.data)
 ```
 
-[코드 9-5] 마커 유전자 기반 세포 유형 주석한 UMAP 시각화
-```{r}
+[코드 10-5] 마커 유전자 기반 세포 유형 주석 UMAP 시각화
+```{r code10_5}
+DimPlot(pbmc_alzheimer_SCT.combined, group.by = "cell_type")
+
+# (참고) UMAP 지정 및 라벨 표시하기
 DimPlot(pbmc_alzheimer_SCT.combined, group.by = "cell_type", reduction = "umap", label = T)
 ```
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT_CCA_UMAP_knownmarker_based_celltype.rds")
 ```
 
 
-## 9.2 슈랏 참조 맵핑 (reference mapping) 이용하기 
+## 10.2 참조 데이터 기반 접근
 
 먼저 참조 데이터를 다운로드 받아줍니다. 저희는 Seurat 에서 제공하는 말초 혈액 세포 참조데이터를 이용하겠습니다. https://zenodo.org/records/7779017#.ZCMojezMJqs 에서 직접 다운을 받거나 다음과 같이 R 코드로 다운받을 수 있습니다. 
 
-[코드 9-6] 참조 데이터 슈랏 오브젝트 다운로드하기 
-```{r}
+[코드 10-6] 참조 데이터 슈랏 오브젝트 다운로드하기
+```{r code10_6}
 # 다운받을 데이터의 URL 
 url <- "https://zenodo.org/records/7779017/files/pbmc_multimodal_2023.rds?download=1"
 
@@ -1073,15 +1159,15 @@ DimPlot(pbmc_multimodal_2023, group.by = "celltype.l2", label = T, repel = TRUE)
 
 _FindTransferAnchors()_ 을 이용해서 참조데이터와 우리 데이터의 공통된 지점인 anchors을 찾을 수 있으며, 추후, 해당 anchors와 _TransferData_ 함수를 이용해서 참조오브젝트의 데이터를 저희의 오브젝트에 옮길 수 있습니다. 
 
-[코드 9-7] 참조 데이터를 이용한 세포유형 맵핑
-```{r}
+[코드 10-7] 참조 데이터를 이용한 세포 유형 매핑
+```{r code10_7}
 # 참조 데이터와 쿼리 데이터 간의 앵커(anchor) 찾기
 anchor <- FindTransferAnchors(
   reference = pbmc_multimodal_2023,     # 주석이 완료된 참조 데이터
   query = pbmc_alzheimer_SCT.combined,  # 세포 유형을 예측하고자 하는 쿼리 데이터
   reference.assay = "SCT",              
   reference.reduction = "spca",         # Supervised PCA
-  query.assay = "integrated",          
+  query.assay = "SCT",                  # 책 [코드 10-7] 기준 (이전 버전에서는 "integrated" 사용)
   normalization.method = "SCT",      
   dims = 1:50                         
 )
@@ -1098,8 +1184,8 @@ pbmc_alzheimer_SCT.combined <- MapQuery(
 )
 ```
 
-[코드 9-8] 슈랏 참조 매핑 결과 UMAP 시각화
-```{r fig.width = 10}
+[코드 10-8] 슈랏 참조 매핑 결과 UMAP 시각화
+```{r code10_8, fig.width = 10}
 # ref.umap 이용하기
 DimPlot(pbmc_alzheimer_SCT.combined, reduction = "ref.umap", group.by = "predicted.celltype.l1", label = T)
 DimPlot(pbmc_alzheimer_SCT.combined, reduction = "ref.umap", group.by = "predicted.celltype.l2", label = T)
@@ -1109,30 +1195,31 @@ DimPlot(pbmc_alzheimer_SCT.combined, reduction = "umap", group.by = "predicted.c
 DimPlot(pbmc_alzheimer_SCT.combined, reduction = "umap", group.by = "predicted.celltype.l2", label = T, repel = T, label.size = 4)
 ```
 
-## 9.3 외부 프로그램 이용 
+## 10.3 외부 프로그램 이용
 ### Azimuth 
 
-[코드 9-9] Azimuth 실행 코드
-```{r}
+[코드 10-9] Azimuth 실행 코드
+```{r code10_9}
 # devtools 설치 및 불러오기
 install.packages("devtools") 
 library(devtools) 
 
 # Azimuth 설치 및 불러오기
-devtools::install_github('satijalab/azimuth', ref = 'master')
+devtools::install_github("satijalab/azimuth", "seurat5")
+# (참고) 이전에 쓰던 설치 방법: devtools::install_github('satijalab/azimuth', ref = 'master')
 library(Azimuth)  
 
 # Azimuth 실행하기 
 pbmc_Azimuth <- RunAzimuth(pbmc_alzheimer_SCT.combined, reference = "pbmcref") 
 ```
 
-[코드 9-10] Azimuth를 이용한 참조 매핑 결과 UMAP 시각화
-```{r fig.width=10}
+[코드 10-10] Azimuth를 이용한 참조 매핑 결과 UMAP 시각화
+```{r code10_10, fig.width=10}
 DimPlot(pbmc_Azimuth, reduction = "umap", group.by = "predicted.celltype.l2", label = T, repel = T, label.size = 4)
 ```
 
-[코드 9-11] SeuratDisk를 이용하여 h5Seurat 형식으로 저장
-```{r}
+[코드 10-11] SeuratDisk를 이용하여 h5Seurat 형식으로 저장하기
+```{r code10_11}
 # 슈랏 오브젝트를 .h5Seurat 형식으로 저장
 library(SeuratDisk)
 SaveH5Seurat(pbmc_alzheimer_SCT.combined, filename = "./rds/pbmc_alzheimer_SCT_CCA_UMAP_reference_mapping.h5Seurat")
@@ -1147,6 +1234,7 @@ pbmc_alzheimer_SCT.combined <- LoadH5Seurat("./rds/pbmc_alzheimer_SCT_CCA_UMAP_r
 ### SingleR
 MonacoImmuneData는 벌크 RNA 시퀀싱에서 나온 면역 세포의 다양한 유형을 모아놓은 데이터 입니다. 따라서 여러 유형의 면역 세포가 포함되어서 말초혈액 단핵세포 데이터를 분석하는 데 가장 적합합니다. 
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 BiocManager::install(
   BiocManager::valid()$out_of_date,
@@ -1156,20 +1244,20 @@ BiocManager::install(
 )
 ```
 
-
-[코드 9-11] SingleR을 이용한 주석에 필요한 라이브러리 설치하기 
-```{r}
+[코드 10-12] SingleR을 이용한 주석에 필요한 라이브러리 설치하기
+```{r code10_12}
 BiocManager::install("celldex")
 BiocManager::install("SingleR") 
 BiocManager::install("SingleCellExperiment") 
 ```
 
-[코드 9-12]  SingleR을 이용한 세포 유형 주석 실행 및 시각화
-```{r, fig.width=10}
+[코드 10-13] SingleR을 이용한 세포 유형 주석 실행 및 시각화
+```{r code10_13, fig.width=10}
 # 패키지 불러오기 
 library(SingleR) 
 library(celldex) 
 library(SingleCellExperiment) 
+library(pheatmap)
 
 # 비슷한 참조 데이터 불러오기 
 ref.data <- MonacoImmuneData(ensembl=F)
@@ -1194,8 +1282,8 @@ pheatmap::pheatmap(log10(tab+10), cluster_cols = FALSE)
 
 ### scType
 
-[코드 9-13] scType에 필요한 툴과 데이터 다운로드하기 
-```{r}
+[코드 10-14] scType에 필요한 툴과 데이터 다운로드하기
+```{r code10_14}
 # 필요한 라이브러리 설치 및 불러오기  
 BiocManager::install("HGNChelper")
 install.packages("openxlsx")
@@ -1219,8 +1307,8 @@ tissue = "Immune system"
 gs_list = gene_sets_prepare(db_, tissue)
 ```
 
-[코드 9-13] scType를 이용한 세포유형 맵핑
-```{r}
+[코드 10-15] scType를 이용한 세포 유형 매핑
+```{r code10_15}
 # 유전자 발현 데이터를 기반으로 세포 유형 점수 계산
 # gs: 양성 마커 유전자 리스트 / gs2: 음성 마커 유전자 리스트
 es.max = sctype_score(
@@ -1262,10 +1350,10 @@ sctype_scores$type[
 ] = "Unknown"
 ```
 
-[코드 9-14] scType를 이용한 세포유형 맵핑 시각화 
-```{r fig.width = 10}
+[코드 10-16] scType를 이용한 세포 유형 매핑 시각화
+```{r code10_16a, fig.width = 10}
 # 각 클러스터에 대해 가장 높은 점수를 받은 세포 유형을 'customclassif' 열에 할당 
-# pbmc_alzheimer_SCT.combined@meta.data$customclassif = ""
+pbmc_alzheimer_SCT.combined@meta.data$customclassif = ""
 for(j in unique(sctype_scores$cluster)){
   cl_type = sctype_scores[sctype_scores$cluster==j,]
   pbmc_alzheimer_SCT.combined@meta.data$customclassif[pbmc_alzheimer_SCT.combined@meta.data$integrated_snn_res.0.3 == j] = as.character(cl_type$type[1])
@@ -1274,12 +1362,13 @@ for(j in unique(sctype_scores$cluster)){
 saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT_CCA_UMAP_scType.rds")
 ```
 
-[코드 9-13] scType를 이용한 세포유형 맵핑 시각화
-```{r  fig.width=10}
+[코드 10-16] scType를 이용한 세포 유형 매핑 시각화
+```{r code10_16b, fig.width=10}
 DimPlot(pbmc_alzheimer_SCT.combined, reduction = "umap", label = TRUE, repel = TRUE, group.by = 'customclassif') 
 ```
 
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # 함수 불러오기
 source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/auto_detect_tissue_type.R")
@@ -1294,6 +1383,7 @@ tissue_guess = auto_detect_tissue_type(path_to_db_file = db_, seuratObject = pbm
 
 ### scanVI
 [코드 9-] scanVI 를 위한 라이브러리 설치 및 Seurat 오브젝트 변환 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 install.packages("reticulate") # python함수를 R에서 사용가능하게 도와주는 라이브러리 (TODO : 체크 하기) 
 install.packages("cowplot")    # ggplot를 활용한 시각화를 도와주는 툴 
@@ -1311,39 +1401,99 @@ adata <- convertFormat(pbmc_alzheimer_SCT.combined, from="seurat", to="anndata",
 print(adata) # Note generally in Python, dataset conventions are obs x var
 ```
 
-# 챕터 10 단일 세포 데이터 후속 분석 
-## 챕터 10.1 차등 발현 유전자 분석  
+# Chapter 11 단일세포 데이터 후속 분석
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT_CCA_UMAP_scType.rds") 
-
-# pbmc_alzheimer_SCT.combined@meta.data <- pbmc_alzheimer_SCT.combined@meta.data %>%
-#   select(1:10, 12:14, 11)
-# saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT_CCA_UMAP_scType.rds")
-# 
-
-# pbmc_alzheimer_SCT.combined[[]] <- pbmc_alzheimer_SCT.combined[[]] %>%
-  # mutate(customclassif = gsub(" |  ", "_", customclassif))
 ```
 
+## 11.1 샘플 간의 거리
+
+[코드 11-1] 단일세포 데이터를 샘플 수준으로 주성분 분석 그래프 그리기
+```{r code11_1}
+# 슈랏 오브젝트에서 샘플 이름(Run)별 평균 유전자 발현값 계산하기
+Idents(pbmc_alzheimer_SCT.combined) <- "Run"
+pbmc_alzhemier_avg_expr <- AverageExpression(object = pbmc_alzheimer_SCT.combined, assays = "SCT")
+
+# 결과를 데이터프레임 형태로 변환하기
+pbmc_alzhemier_avg_expr <- as.data.frame(t(pbmc_alzhemier_avg_expr$SCT))
+
+# 평균 발현값을 이용해 주성분 분석(PCA) 수행하기
+pbmc_alzhemier_avg_expr_pca <- prcomp(pbmc_alzhemier_avg_expr, center = TRUE, scale = TRUE)
+
+# ggbiplot 패키지 설치 및 불러오기 
+install.packages("ggbiplot")
+library(ggbiplot)
+
+# 샘플 이름 별 질병상태(subject_status) 정보를 가져와서 색 지정하기
+sample_groups <- unique(pbmc_alzheimer_SCT.combined@meta.data[, c("Run", "subject_status")])$subject_status
+
+# PCA 시각화
+ggbiplot(pbmc_alzhemier_avg_expr_pca,
+         labels = row.names(pbmc_alzhemier_avg_expr),
+         var.axes = FALSE,
+         groups = sample_groups)
+
+```
+
+## 11.2 차등 발현 유전자(DEG) 분석
+### 11.2.1 Pseudo-bulk 기반
+
+<!-- (책 수록 코드 아님: 참고/실험용) -->
+```{r}
+# 각 조건별 샘플 수 확인 
+pbmc_alzheimer_SCT.combined@meta.data %>%
+  distinct(Run, subject_status)
+```
+
+[코드 11-2] Pseudo-bulk를 이용한 차등 발현 유전자 분석 예시
+```{r code11_2}
+# Pseudo-bulk 행렬 생성
+pbmc_alzheimer_SCT.combined_bulk <- AggregateExpression(pbmc_alzheimer_SCT.combined, 
+                                              group.by = c("Run", "subject_status"), 
+                                              assays = "SCT", 
+                                              return.seurat = TRUE)
+
+# pseudobulk 프로파일의 예시 출력 (각 "cell"은 하나의 샘플 조건을 대표함)
+tail(Cells(pbmc_alzheimer_SCT.combined_bulk))
+
+# 비교를 위한 그룹 기준으로 'subject_status' 지정
+Idents(pbmc_alzheimer_SCT.combined_bulk) <- "subject_status"
+
+# 정상인과 중증 AD 환자 간의 차등 발현 유전자 분석 수행 (DESeq2 사용)
+bulk.de <- FindMarkers(object = pbmc_alzheimer_SCT.combined_bulk,
+                            ident.1 = "normal individual", 
+                            ident.2 = "patient with severe AD",
+                            test.use = "DESeq2")
+
+# 상위 15개의 차등 발현 유전자 결과 확인
+head(bulk.de, n = 15)
+```
+
+### 11.2.2 개별 세포 기반
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 devtools::install_github('immunogenomics/presto')
 library(presto) # for a much faster way 1
 ```
 
-[코드 10-1] 그룹간 차등 유전자 발현(DEG) 분석 실행하기 
-```{r}
+[코드 11-3] 그룹간 차등 발현 유전자(DEG) 분석 실행하기
+```{r code11_3}
 # 그룹 식별자 설정
 Idents(pbmc_alzheimer_SCT.combined) <- "subject_status"
 
 # FindMarkers() 함수 실행 전에 준비시키기 
-pbmc_alzheimer_SCT.combined<-PrepSCTFindMarkers(pbmc_alzheimer_SCT.combined) 
+pbmc_alzheimer_SCT.combined <- PrepSCTFindMarkers(pbmc_alzheimer_SCT.combined)
+saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT_CCA_UMAP_scType_prepSCT.rds")
 
 # 중증 환자 vs 일반인 차등 발현 유전자 
-degs_severeADvsnormal <- FindMarkers(pbmc_alzheimer_SCT.combined, ident.1 = "patient with severe AD", ident.2 = "normal individual", only.pos = FALSE) 
+degs_severeADvsnormal <- FindMarkers(pbmc_alzheimer_SCT.combined, ident.1 = "patient with severe AD", 
+                                     ident.2 = "normal individual", only.pos = FALSE) 
 
 # 경증 환자 vs 일반인 차등 발현 유전자 
-degs_mildADvsnormal <- FindMarkers(pbmc_alzheimer_SCT.combined, ident.1 = "patient with mild AD", ident.2 = "normal individual", only.pos = FALSE) 
+degs_mildADvsnormal <- FindMarkers(pbmc_alzheimer_SCT.combined, ident.1 = "patient with mild AD", 
+                                   ident.2 = "normal individual", only.pos = FALSE) 
 
 # avg_log2FC 절댓값으로 내림차순 정렬하기 
 degs_severeADvsnormal <- degs_severeADvsnormal %>% 
@@ -1352,37 +1502,43 @@ degs_mildADvsnormal <- degs_mildADvsnormal %>%
   arrange(-abs(avg_log2FC)) 
 ```
 
-[코드 10-2] 데이터 프레임 csv 형태로 저장하기  
-```{r}
+[코드 11-4] 데이터프레임을 CSV 형태로 저장하기
+```{r code11_4}
+# 저장 폴더('results')를 상위 디렉터리에 생성
+if (!dir.exists("../results")) {
+  dir.create("../results")
+}
+
+# DEGs 결과를 CSV 파일로 저장
 write.csv(degs_severeADvsnormal, "../results/all_degs_severeADvsnormal.csv", row.names=F) 
 write.csv(degs_mildADvsnormal, "../results/all_degs_mildADvsnormal.csv", row.names=F) 
 ```
 
 
-[코드 10-3] 차등 발현 유전자 시각화 - 바이올린 플롯 
-```{r fig.height=10}
-# 설정
+[코드 11-5] 차등 발현 유전자 시각화 - 바이올린 플롯
+```{r code11_5, fig.height=10}
+# 설정하기
 Idents(pbmc_alzheimer_SCT.combined) <- "subject_status"
 DefaultAssay(pbmc_alzheimer_SCT.combined) <- "SCT"
 
-# 차등 발현이 가장 큰 유전자 6개의 바이올린 플롯 
+# 차등 발현이 가장 큰 유전자 6개의 바이올린 플롯 그리기
 VlnPlot(pbmc_alzheimer_SCT.combined, features = rownames(degs_severeADvsnormal)[1:6],
-        layer = "data", log = TRUE)
+        layer = "data")
 ```
 
-[코드 10-4] 차등 발현 유전자 시각화 - 릿지 플롯 
-```{r fig.height=10}
+[코드 11-6] 차등 발현 유전자 시각화 - 릿지 플롯
+```{r code11_6, fig.height=10}
 RidgePlot(pbmc_alzheimer_SCT.combined, features = rownames(degs_severeADvsnormal)[1:6],
         layer = "data")
 ```
 
-[코드 10-5] 차등 발현 유전자 시각화 - 피쳐 플롯 
-```{r fig.height=10}
+[코드 11-7] 차등 발현 유전자 시각화 - 피처플롯
+```{r code11_7, fig.height=10}
 FeaturePlot(pbmc_alzheimer_SCT.combined, features = rownames(degs_severeADvsnormal)[1:2], split.by = "subject_status")
 ```
 
-[코드 10-6] 세포 유형별 차등 발현 유전자(DEG) 분석 
-```{r}
+[코드 11-8] 세포 유형별 차등 발현 유전자(DEG) 분석
+```{r code11_8}
 # 설정 
 Idents(pbmc_alzheimer_SCT.combined) <- "subject_status" 
 DefaultAssay(pbmc_alzheimer_SCT.combined) <- "SCT"
@@ -1411,8 +1567,9 @@ for (celltype in unique(pbmc_alzheimer_SCT.combined@meta.data$customclassif)){
 }
 
 # TODO: 왜,,,, 이렇게 하니까 아웃풋이 다른것 같지 
-saveRDS(pbmc_alzheimer_SCT.combined, "./rds/pbmc_alzheimer_SCT_CCA_UMAP_scType_prepSCT.rds")
 ```
+
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # 설정 
 Idents(pbmc_alzheimer_SCT.combined) <- "subject_status" 
@@ -1455,8 +1612,8 @@ sobj_subsets_list <- readRDS("./rds/sobj_subsets_list.rds")
 ```
 
 
-[코드 10-7] B 세포의 차등 발현 유전자 데이터 확인하기 
-```{r}
+[코드 11-9] B 세포의 차등 발현 유전자 데이터 확인하기
+```{r code11_9}
 # B 세포의 차등 발현 유전자 데이터 확인하기   
 degs_bcell <- read.csv("../results/Naive B cells_degs_severeADvsnormal.csv", stringsAsFactors = FALSE)
 
@@ -1471,9 +1628,12 @@ degs_bcell_down <- degs_bcell %>%
   filter(p_val_adj < 0.05 & avg_log2FC < 0) 
 ```
 
-[코드 10-8] B 세포의 차등 발현 유전자 발현 패턴 시각화: 히트맵 
-```{r, fig.width = 10}
-# 1. log2FC 큰 상위 200개 유전자만 선택
+[코드 11-10] B 세포의 차등 발현 유전자 발현 패턴 시각화: 히트맵
+```{r code11_10, fig.width = 10}
+# 0. Naive B 세포만 추출하기
+pbmc_naive_bcell <- subset(pbmc_alzheimer_SCT.combined, subset = customclassif == "Naive B cells")
+
+# 1. log2FC 큰 상위 100개 유전자만 선택
 top_genes <- degs_bcell %>% 
   filter(p_val_adj < 0.05 ) %>%
   arrange(desc(abs(avg_log2FC))) %>% 
@@ -1482,45 +1642,138 @@ top_genes <- degs_bcell %>%
 selected_genes <- top_genes$X
 
 # 2. 평균값 매트릭스 가져오기
-# TODO: group_means
+group_means <- AggregateExpression(pbmc_naive_bcell, group.by = "subject_status") 
 group_means_matrix_sub <- group_means$SCT[selected_genes, ]
 
 # 3. pheatmap 그리기
+library(pheatmap)
 pheatmap(group_means_matrix_sub,  
-         cluster_rows = TRUE,       # 유전자 클러스터링 추가
+         cluster_rows = FALSE,      # 책 [코드 11-10] 기준 (TRUE로 두면 유전자 클러스터링 추가)
          cluster_cols = FALSE, 
          show_rownames = FALSE, 
          show_colnames = TRUE,
          angle_col = 0,
          scale = "row", 
-         main = "Naive B Cell DEGs (Top 100)",
+         main = "Naive B CELL DEGs",
          breaks = seq(-1, 1, length.out = 101),
          color = colorRampPalette(c("blue", "white", "red"))(100))
 
 ```
 
-[코드 10-9] B 세포에서의 차등 발현 유전자 박스 플롯 그리기 
-```{r, fig.width = 12}
-# pbmc_naive_bcell <- subset(pbmc_alzheimer_SCT.combined, subset = customclassif == "Naive B cells")
-pbmc_naive_bcell <- sobj_subsets_list$`Naive B cells`
-pbmc_naive_bcell
-# DefaultAssay(sobj_bcell) <- "SCT"edw
+[코드 11-11] B 세포의 차등 발현 유전자 발현 차이 시각화: 릿지 플롯
+```{r code11_11, fig.width = 12}
+# 릿지 플롯 시각화하기
+RidgePlot(pbmc_naive_bcell, features = degs_bcell[1:6, ]$X, ncol = 2, layer = "data", log = TRUE)
+```
 
+[코드 11-12] B 세포의 차등 발현 유전자 발현 차이 시각화: 바이올린 플롯
+```{r code11_12, fig.width = 12}
+VlnPlot(pbmc_naive_bcell, features = degs_bcell[1:6, ]$X, layer = "data", log = TRUE)
+```
+
+<!-- (책 수록 코드 아님: 참고/실험용) -->
+```{r, fig.width = 12}
+# 상향 조절 유전자만 따로 보기
 # degs_bcell_up_ <- degs_bcell_up %>% filter(pct.1 - pct.2 > 0.2)
 RidgePlot(pbmc_naive_bcell, features = degs_bcell_up[1:6, ]$X, ncol = 2, layer = "data", log = TRUE)
 
 degs_bcell_up[degs_bcell$X == "RPS4Y1",]
-
-RidgePlot(pbmc_naive_bcell, features = c("RPS4Y1", ), ncol = 2, layer = "data", log = TRUE)
+RidgePlot(pbmc_naive_bcell, features = c("RPS4Y1"), ncol = 2, layer = "data", log = TRUE)
 
 VlnPlot(pbmc_naive_bcell, features = degs_bcell_up[1:6, ]$X, layer = "data", log = TRUE)
 ```
 
-## 챕터 10.2 하위클러스터링 
-[코드 10-11] B 세포 재클러스터링  
-pbmc_alzheimer_SCT.combined@graphs$integrated_nn 
+
+
+## 11.3 GSEA 및 KEGG 경로 분석
+[코드 11-13] GSEA에 필요한 패키지 설치 및 라이브러리 불러오기
+```{r code11_13}
+# GSEA 분석에 필요한 패키지 설치하기
+install.packages("msigdbr")
+install.packages("tidyverse")
+
+# GSEA 분석에 필요한 패키지 불러오기 
+BiocManager::install("msigdbr")
+library(msigdbr) 	#위에서 언급한 분자특성데이터베이스를 R에서 불러오는 패키지 
+BiocManager::install("fgsea")
+library(fgsea)
+library(dplyr)  
+library(ggplot2)  
+library(tidyverse)  
+library(data.table) 
+```
+
+[코드 11-14] B 세포 차등발현 유전자 확인한 다음 발현량 순서대로 저장하기
+```{r code11_14a}
+# adj p-value < 0.05인 B 세포 차등 발현 유전자 확인하기
+degs_bcell_0.05 <- degs_bcell %>% filter(p_val_adj < 0.05)
+head(degs_bcell_0.05) 
+```
+
+[코드 11-15] 유전자 그룹 데이터베이스 불러와 정리하기
+```{r code11_15}
+# 사용 가능한 생물 종 모두 표시하기 
+# msigdbr_species()  
+
+#분자특성데이터베이스에서 유전자 그룹 불러오기 
+m_df<- msigdbr(species = "Homo sapiens", collection = "H")   # msigdbr 10 이전 버전은 collection 대신 category 사용
+
+#불러온 유전자 그룹 정리하기 
+fgsea_sets<- m_df %>% split(x = .$gene_symbol, f = .$gs_name)  
+
+#불러온 유전자 그룹 살펴보기  
+head(m_df) 
+```
+
+[코드 11-14] B 세포 차등발현 유전자 확인한 다음 발현량 순서대로 저장하기
+```{r code11_14b}
+# 유전자를 발현량 차이로 정렬하여 순서대로 저장하기 
+Bcell.genes <- degs_bcell_0.05 %>% arrange(desc(avg_log2FC)) %>% dplyr::select(X, avg_log2FC) 
+head(Bcell.genes) 
+
+ranks<- deframe(Bcell.genes)  
+head(ranks) 
+```
+
+[코드 11-16] GSEA 실행하여 결과 저장하기
+```{r code11_16}
+# GSEA 실행하여 저장하기 
+fgseaRes<- fgsea(fgsea_sets, stats = ranks, nperm = 1000) 
+
+# 필요한 정보를 보기쉽게 저장하기 
+fgseaResTidy <- fgseaRes %>% as_tibble() %>% arrange(desc(NES)) 
+fgseaResTidy %>% dplyr::select(-leadingEdge, -ES, -nMoreExtreme) %>% arrange(padj) 
+head(fgseaResTidy) 
+```
+
+[코드 11-17] GSEA 결과 시각화하기
+```{r code11_17}
+ggplot(fgseaResTidy %>% head(n= 50), aes(reorder(pathway, NES), NES)) +   
+  geom_col(aes(fill= NES<0)) + 
+  coord_flip() + 
+  labs(x="Pathway", y="Normalized Enrichment Score", title="Hallmark pathways NES from GSEA") + 
+  theme_minimal() 
+```
+
+[코드 11-18] 개별 유전자 그룹 시각화하기
+```{r code11_18}
+plotEnrichment(fgsea_sets[["HALLMARK_INTERFERON_ALPHA_RESPONSE"]], ranks) + 
+  labs(title="HALLMARK_ INTERFERON_ALPHA_RESPONSE ") 
+```
+
+Time series
+<!-- (책 수록 코드 아님: 참고/실험용) -->
+```{r, fig.width = 12}
+DimPlot(pbmc_alzheimer_SCT.combined, split.by = "subject_status", group.by = "customclassif", label.size = 2) + 
+  theme(legend.text = element_text(size = 8))
+```
+
+## 11.4 하위 클러스터링
+사용 가능한 그래프는 `pbmc_alzheimer_SCT.combined@graphs$integrated_nn` 으로 확인할 수 있습니다.
 (nn: kNN graph , snn: shared NN graph)
-```{r }
+
+[코드 11-19] Naive B 세포 하위 클러스터링
+```{r code11_19}
 # [1] 원래 데이터 이용하기 
 Idents(pbmc_alzheimer_SCT.combined) <- "customclassif"
 pbmc_alzheimer_SCT.combined <- FindSubCluster(
@@ -1536,121 +1789,34 @@ pbmc_alzheimer_SCT.combined <- FindSubCluster(
 DimPlot(pbmc_alzheimer_SCT.combined, group.by = "sub.cluster")
 
 
-# [2] B 세포 부분 데이터 이용하기 
-pbmc_bcells <- sobj_subsets_list$`Naive B cells`
-pbmc_bcells <- FindClusters(pbmc_bcells, resolution = 0.3, graph.name ="integrated_nn", cluster.name = "Naive B Cells subclusters") 
+# [2] Naive B 세포 부분 슈랏 오브젝트 이용하기
+pbmc_naive_bcell <- FindClusters(pbmc_naive_bcell, resolution = 0.5, graph.name ="integrated_nn", cluster.name = "Naive B Cells subclusters") 
 
-# 시각화 
-DimPlot(pbmc_bcells, group.by = "Naive B Cells subclusters") 
-colnames(pbmc_bcells[[]])
+# 시각화하기
+DimPlot(pbmc_naive_bcell, group.by = "Naive B Cells subclusters") 
+colnames(pbmc_naive_bcell[[]])
 ```
 
-## 챕터 10.3 샘플간의 거리 시각화
 
-[코드 10-12] 단일 세포 데이터를 주성분 분석 그래프로 나타내기 
+
+
+
+
+# Chapter 12 추가 분석 툴
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
-# 슈랏 오브젝트에서 Run별 평균 유전자 발현값 계산하기
-Idents(pbmc_alzheimer_SCT.combined) <- "Run"
-pbmc_alzhemier_avg_expr <- AverageExpression(object = pbmc_alzheimer_SCT.combined, assays = "SCT")
-
-# 결과를 데이터프레임 형태로 변환하기
-pbmc_alzhemier_avg_expr <- as.data.frame(t(pbmc_alzhemier_avg_expr$SCT))
-
-# 평균 발현값을 이용해 주성분 분석(PCA) 수행하기
-pbmc_alzhemier_avg_expr_pca <- prcomp(pbmc_alzhemier_avg_expr, center = TRUE, scale = TRUE)
-
-# ggbiplot 패키지를 이용해 PCA 결과 시각화 (샘플 상태별 색상 구분)
-install.packages("ggbiplot")
-library(ggbiplot)
-sample_groups <- unique(pbmc_alzheimer_SCT.combined@meta.data[, c("Run", "subject_status")])$subject_status # 샘플 이름(Run)별 subject_status 정보를 가져와서 색 지정하기
-ggbiplot(pbmc_alzhemier_avg_expr_pca,
-         labels = row.names(pbmc_alzhemier_avg_expr),
-         var.axes = FALSE,
-         groups = sample_groups)
+pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT_CCA_UMAP_scType_prepSCT.rds")
 ```
 
-## 챕터 10.4 GSEA and KEGG 경로 분석 
-[코드 10-13] GSEA에 필요한 패키지 설치 및 라이브러리 불러오기 
-```{r}
-# GSEA 분석에 필요한 패키지 불러오기 
-BiocManager::install("msigdbr")
-library(msigdbr) 	#위에서 언급한 분자특성데이터베이스를 R에서 불러오는 패키지 
-BiocManager::install("fgsea")
-library(fgsea)
-library(dplyr)  
-library(ggplot2)  
-library(tidyverse)  
-library(data.table) 
-```
+## 12.1 품질관리
 
-[코드 10-14] B세포 차등발현 유전자 확인하기 
-```{r}
-head(degs_bcell_0.05) 
-```
-
-[코드 10-15] 유전자 그룹 데이터베이스 불러와 정리하기
-```{r}
-# 사용 가능한 생물 종 모두 표시하기 
-# msigdbr_species()  
-
-#분자특성데이터베이스에서 유전자 그룹 불러오기 
-m_df<- msigdbr(species = "Homo sapiens", category = "H") 
-
-#불러온 유전자 그룹 정리하기 
-fgsea_sets<- m_df %>% split(x = .$gene_symbol, f = .$gs_name)  
-
-#불러온 유전자 그룹 살펴보기  
-head(m_df) 
-```
-
-```{r}
-# 유전자를 발현량 차이로 정렬하여 순서대로 저장하기 
-Bcell.genes <- degs_bcell_0.05 %>% arrange(desc(avg_log2FC)) %>% dplyr::select(X, avg_log2FC) 
-head(Bcell.genes) 
-
-ranks<- deframe(Bcell.genes)  
-head(ranks) 
-```
-
-```{r}
-# GSEA 실행하여 저장하기 
-fgseaRes<- fgsea(fgsea_sets, stats = ranks, nperm = 1000) 
-
-# 필요한 정보를 보기쉽게 저장하기 
-fgseaResTidy <- fgseaRes %>% as_tibble() %>% arrange(desc(NES)) 
-fgseaResTidy %>% dplyr::select(-leadingEdge, -ES, -nMoreExtreme) %>% arrange(padj) 
-head() 
-```
-```{r}
-ggplot(fgseaResTidy %>% head(n= 50), aes(reorder(pathway, NES), NES)) +   
-  geom_col(aes(fill= NES<0)) + 
-  coord_flip() + 
-  labs(x="Pathway", y="Normalized Enrichment Score", title="Hallmark pathways NES from GSEA") + 
-  theme_minimal() 
-```
-
-```{r}
-plotEnrichment(fgsea_sets[["HALLMARK_INTERFERON_ALPHA_RESPONSE"]], ranks) + 
-  labs(title="HALLMARK_ INTERFERON_ALPHA_RESPONSE ") 
-```
-
-Time series
-```{r, fig.width = 12}
-DimPlot(pbmc_alzheimer_SCT.combined, split.by = "subject_status", group.by = "customclassif", label.size = 2) + 
-  theme(legend.text = element_text(size = 8))
-```
-
-
-# 챕터 11 추가 분석 툴들 
-## 11.1 품질 관리(QC)
-### 11.1.1 두방울 세포 제거
+### 12.1.1 두세포 방울 제거
 #### DoubletFinder
-
-[코드 11-1] 슈랏 오브젝트에 Doubletfinder 함수 실행하기 
-```{r}
+[코드 12-1] DoubletFinder를 이용한 두세포 방울 분류하기
+```{r code12_1}
 # DoubleFinder 설치 및 불러오기 
-install.packages("remotes")
-remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')
+install.packages("remotes") # TODO: 이거 중복 없나 확인 
+remotes::install_github('chris-mcginnis-ucsf/DoubletFinder', force=T)
 library(DoubletFinder)
 
 # pbmc_alzheimer_SCT.list 파일 불러오기
@@ -1663,20 +1829,31 @@ pbmc_alzheimer_SCT.list_processed <- lapply(pbmc_alzheimer_SCT.list, function(so
       RunPCA(., verbose = FALSE) %>%
       RunUMAP(., reduction = "pca", dims = 1:30, verbose = FALSE) %>%
       FindNeighbors(., reduction = "pca", dims = 1:30) %>% 
-      FindClusters(., resolution = c(0.3)) 
+      FindClusters(., resolution = 0.3) 
 }) 
 
 # 각 샘플마다 두 세포 방울 찾기  
 pbmc_alzheimer_SCT.list_processed_doublefinder <- lapply(pbmc_alzheimer_SCT.list_processed, function(sobj) {  
-  # 예시로 전체 세포의 7.5%를 예상 두방울 수로 설정
+  # 예시로 전체 세포의 7.5%를 예상 두세포 방울 수로 설정하기
   nExp_poi <- round(0.075 * nrow(sobj@meta.data))
+  # 책 [코드 12-1] 원문은 pK를 고정값으로 사용합니다.
+  #   sobj_doublefinder <- doubletFinder(sobj, PCs = 1:10, pN = 0.25, pK = 0.09, nExp = nExp_poi, reuse.pANN = FALSE, sct = TRUE)
+  # 아래는 [NOTE]에서 안내한 대로 [코드 12-2] 방법으로 pK 최적값을 구해 사용하는 방식입니다.
+  sweep.list <- paramSweep(sobj, PCs=1:10, sct=TRUE)
+  sweep.stats <- summarizeSweep(sweep.list, GT=FALSE)
+  bcmvn <- find.pK(sweep.stats)
+  opt_pK <-   bcmvn %>%
+    arrange(desc(BCmetric)) %>%
+    slice(1) %>%
+    pull(pK)
   # DoubletFinder 실행 
-  sobj_doublefinder <- doubletFinder(sobj, PCs = 1:10, pN = 0.25, pK = 0.09, nExp = nExp_poi, reuse.pANN = FALSE, sct = TRUE) 
+  sobj_doublefinder <- doubletFinder(sobj, PCs = 1:10, pN = 0.25, pK = opt_pK, nExp = nExp_poi, reuse.pANN = FALSE, sct = TRUE)  
+  # TODO: Error in xtfrm.data.frame(x) : cannot xtfrm data frames
 })
 ```
 
-[코드 11-2] DoubletFinder의 pK 매개변수 최적 값 구하기
-```{r}
+[코드 12-2] BCMVN 기반 pK 최적값 구하기(DoubletFinder)
+```{r code12_2}
 # 불러온 슈랏 오브젝트 내의 SCT 모델을 통합시켜 준비시키기
 pbmc_alzheimer_SCT.combined<-PrepSCTFindMarkers(pbmc_alzheimer_SCT.combined)
 
@@ -1685,40 +1862,43 @@ sweep.stats <- summarizeSweep(sweep.list, GT=FALSE)
 bcmvn <- find.pK(sweep.stats)
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # DoubletFinder 결과 확인 
 pbmc_alzheimer_SCT.list_processed_doublefinder[[1]]@meta.data[1:5,]
 ```
 
-[코드 11-3] DoubletFinder 실행 결과 시각화 예시 
-```{r}
+[코드 12-3] DoubletFinder 실행 결과 시각화 예시
+```{r code12_3}
 DimPlot(pbmc_alzheimer_SCT.list_processed_doublefinder[[1]],  group.by = "DF.classifications_0.25_0.09_860") 
 ```
 
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # pbmc_alzheimer_SCT.list_processed_doublefinder[[1]] <- subset(pbmc_alzheimer_SCT.list_processed_doublefinder[[1]], subset = DF.classifications_0.25_0.09_860 == "Singlet")
 # # TODO 
 ```
 
-[코드 11-4] DoubletFinder 실행 결과들을 통합 슈랏 오브젝트 메타데이터에 추가하기
-```{r}
+[코드 12-4] DoubletFinder 실행 결과를 통합 슈랏 오브젝트 메타데이터에 추가하기
+```{r code12_4}
 # pbmc_alzheimer_SCT.list_processed_doublefinder의 여섯 개의 결과값을 추출하여 통합 오브젝트(pbmc_alzheimer_SCT.combined)에 합치기  
 for (i in 1:length(pbmc_alzheimer_SCT.list_processed_doublefinder)) { 
   current_object <- pbmc_alzheimer_SCT.list_processed_doublefinder[[i]] 
    
-  # DoubletFinder 실행 결과인 스코어와 두 방울 결과 값 열 추출 
-  current_metadata <- current_object@meta.data[, 9:10] 
-  print(dim(current_metadata)) 
+  # DoubletFinder 실행 결과 열 찾기(열 위치는 실행 환경에 따라 달라질 수 있습니다)
+  pann_col <- grep("^pANN_", colnames(current_object@meta.data), value = TRUE) 
+  class_col <- grep("^DF.classifications", colnames(current_object@meta.data), value = TRUE)
+  current_metadata <- current_object@meta.data[, c(pann_col, class_col)] 
    
-  # 열 이름을 통일성 있게 변경하기 
+  # 열 이름을 통일하여 변경하기 
   colnames(current_metadata) <- c("DF.score", "DF.classifications") 
    
   # 통합 오브젝트와 일치하는 세포 바코드 찾기 
   common_cells <- intersect(rownames(pbmc_alzheimer_SCT.combined@meta.data), paste0(rownames(current_metadata), "_", i)) 
    
-  # DoubletFinder 결과값들을 pbmc_alzheimer_SCT.combined 오브젝트의 메타데이터에 추가 
+  # DoubletFinder 결과를 pbmc_alzheimer_SCT.combined 오브젝트의 메타데이터에 추가하기
   pbmc_alzheimer_SCT.combined@meta.data[common_cells, "DF.score"] <- current_metadata[rownames(current_metadata), "DF.score"] 
-  pbmc_alzheimer_S 
+  pbmc_alzheimer_SCT.combined@meta.data[common_cells, "DF.classifications"] <- current_metadata[rownames(current_metadata), "DF.classifications"]
 }
 # TODO 
 
@@ -1728,53 +1908,78 @@ head(pbmc_alzheimer_SCT.combined@meta.data)
 
 
 #### scDblFinder
-[코드 11-5] 슈랏 오브젝트에 scDblFinder함수 실행하기 
-```{r}
+[코드 12-5] scDblFinder를 이용한 두세포 방울 분류
+```{r code12_5}
 # scDBlFinder 패키지 설치 및 불러오기
-BiocManager::install("scDblFinder")
+BiocManager::install("scDblFinder", force=T)
+remotes::install_version("generics", version = "0.1.3") # R 버전에 따라 필요할 수 있습니다.
 library(scDblFinder)
 
 # 방법 1. 각 샘플마다 두 세포 방울 계산  
 pbmc_alzheimer_SCT.list_processed_sce <- lapply(pbmc_alzheimer_SCT.list_processed, function(sobj) {  
   # 슈랏 오브젝트를 singlecellexperiment(sce) 오브젝트로 변환하기
-  sce <- as.SingleCellExperiment(sobj)
+  sce <- Seurat::as.SingleCellExperiment(sobj)
   # scDblFinder 실행 
   sce_scDblFinder <- scDblFinder(sce)
 })
  
 # 방법 2. 합쳐진 슈랏 오브젝트를 이용하여 두 세포 방울 한번에 계산  
-sce <- as.SingleCellExperiment(pbmc_alzheimer_SCT.combined, assay = "SCT")
+sce <- Seurat::as.SingleCellExperiment(pbmc_alzheimer_SCT.combined, assay = "SCT")
+# scDblFinder 실행 
 sce_scDblFinder <- scDblFinder(sce, samples = "Run") 
-head(colData(sce_scDblFinder))
+head(colData(sce_scDblFinder), n=3)
 ```
 
 
-### 11.1.2 세포 잔해 제거
+### 12.1.2 배경 RNA 제거
 #### SoupX
-[코드 11-6] SoupX를 이용하여 주변 RNA 계산하기
-```{r}
+[코드 12-6] SoupX를 이용한 배경 RNA 계산
+```{r code12_6}
 # SoupX 패키지 설치 및 불러오기
 install.packages("SoupX") 
 library(SoupX) 
 
 # 미가공 데이터 불러오기 
-sc = load10X("../data/count_SRR13911909/outs/")
+sc <- load10X("../data/count_SRR13911909/outs/")
 
 # 오염 정도(rho) 추정
-sc = autoEstCont(sc)
+sc <- autoEstCont(sc)
 sc$metaData    # 메타데이터 및 오염 정도 확인 
 sc$soupProfile # 주변 RNA로 추측된 유전자 카운트 확인 
 
 # 데이터 정제
-out = adjustCounts(sc)
+out <- adjustCounts(sc)
 
-# 시각화 예시
+# 과대 추정 시각화 
+plotChangeMap(sc, out, "ISG15")
+
+# 슈랏 오브젝트로 변경 
+srat <- Seurat::CreateSeuratObject(out)
+```
+[코드 12-7] 과대 추정 시각화(SoupX)
+```{r code12_7}
+# 시각화 예시: 배경 RNA로 인해 실제보다 높게 나타난 ISG15 발현
 plotChangeMap(sc, out, "ISG15")
 ```
 
+#### CellBender
+
+[코드 12-10] CellBender를 이용하여 배경 RNA 제거하기 bash 예시 코드
+```{bash code12_10, eval=FALSE}
+#!/bin/bash
+cellbender remove-background \
+  --input raw_feature_bc_matrix.h5 \
+  --output output.h5 \
+  --expected-cells (value) \
+  --total-droplets-included (value) \
+  --fpr 0.01 \
+  --epochs 150
+```
+같은 내용의 스크립트가 `src/CH12_run_cellbender.sh` 에 있습니다.
+
 #### DecontX 
-[코드 11-7] DecontX를 이용하여 주변 RNA 제거하기 
-```{r}
+[코드 12-8] DecontX를 이용하여 배경 RNA 제거하기
+```{r code12_8}
 # decontX 설치 및 불러오기 
 BiocManager::install("decontX")
 library(decontX)
@@ -1783,24 +1988,25 @@ library(decontX)
 sce <- as.SingleCellExperiment(pbmc_alzheimer_SCT.combined, assay = "SCT")
 
 # decontX 실행 
-sce <- decontX(sce) # add background? 
+sce <- decontX(sce) # z 매개변수로, 클러스터 정보 사용 가능 
 
 # 결과 확인 
-colData(sobj_SCE)
+colData(sce)
 
 # 시각화 예시  
 plotDecontXContamination(sce)
 ```
 
-[코드 11-9] 통합 데이터에 decontX 결과값 추가 
-```{r}
+[코드 12-9] 통합 데이터에 DecontX 결과값 추가하기
+```{r code12_9}
 pbmc_alzheimer_SCT.combined[["decontXcounts"]] <- CreateAssayObject(counts = decontXcounts(sce))
 ```
 
 
-# 11.2 클러스터링 최적의 해상도 선택 
-[코드 11-10] 현재 슈랏 오브젝트에 클러스트리 실행
-```{r}
+## 12.2 클러스터링
+### 12.2.1 최적의 해상도(resolution) 선택
+[코드 12-11] 현재 슈랏 오브젝트에 클러스트리 실행
+```{r code12_11}
 # 클러스트리 설치하고 불러오기
 BiocManager::install("clustree")
 library(clustree)
@@ -1809,23 +2015,26 @@ library(clustree)
 clustree(pbmc_alzheimer_SCT.combined, prefix = "integrated_snn_res.")
 ```
 
-[코드 11-11] 더 많은 해상도를 이용하여 클러스터링 및 클러스터리 실행
-```{r}
+[코드 12-12] 더 많은 해상도를 이용하여 클러스터링 및 클러스트리 실행
+```{r code12_12}
 # 슈랏 오브젝트 준비시키기
 DefaultAssay(pbmc_alzheimer_SCT.combined) <- "integrated"
 
 # 더 많은 해상도를 이용하여 클러스터링 하기
-pbmc_alzheimer_SCT.combined <- FindClusters(pbmc_alzheimer_SCT.combined, resolution = c(0.15, 0.25, 0.35, 0.4, 0.45))
+pbmc_alzheimer_SCT.combined <- FindClusters(pbmc_alzheimer_SCT.combined, 
+                                            graph.name = "integrated_snn", 
+                                            resolution = c(0.15, 0.25, 0.35, 0.4, 0.45))
 
 # 클러스트리 실행하기
 clustree(pbmc_alzheimer_SCT.combined, prefix = "integrated_snn_res.")
 ```
 
 
-## 11.3 유전자 네트워크 분석
-### hdWGCNA
-[코드 11-12] hdWGCNA 실행에 필요한 라이브러리 설치 및 불러오기 
-```{r}
+## 12.3 유전자 네트워크 분석
+### 12.3.1 공동 발현 네트워크 추론
+#### hdWGCNA
+[코드 12-13] hdWGCNA 실행에 필요한 라이브러리 설치 및 불러오기
+```{r code12_13}
 # 필요한 패키지 설치 및 불러오기  
 BiocManager::install(c("WGCNA", "igraph", "devtools", "GeneOverlap", "ggrepel", "UCell")) 
 devtools::install_github("NightingaleHealth/ggforestplot") 
@@ -1840,8 +2049,8 @@ theme_set(theme_cowplot())
 allowWGCNAThreads() 
 ```
 
-[코드 11-13] hdWGCNA을 이용한 네트워크 분석 1
-```{r}
+[코드 12-14] hdWGCNA을 이용한 네트워크 분석 1
+```{r code12_14}
 # 슈랏 오브젝트 불러오기와 설정하기
 pbmc_sample1 <- Read10X_h5("SRR13911909_filtered_feature_bc_matrix.h5")
 pbmc_sample1 <- CreateSeuratObject(counts = pbmc_sample1, project = "AD1", min.cells = 3, min.features = 200)
@@ -1894,12 +2103,12 @@ plot_list <- PlotSoftPowers(pbmc_sample1)
 wrap_plots(plot_list, ncol=2)
 ```
 
-[코드 11-15] hdWGCNA을 이용한 네트워크 분석 2
-```{r}
+[코드 12-15] hdWGCNA을 이용한 네트워크 분석 2
+```{r code12_15}
 # 공통발현 네트워크 구축하기
 pbmc_sample1 <- ConstructNetwork(
   pbmc_sample1, 
-   soft_power = 4, # [그림 11-9]에서 선택한 소프트파워 값 4
+   soft_power = 4, # [그림 12-9]에서 선택한 소프트파워 값 4
    overwrite_tom = TRUE
 ) 
 
@@ -1921,14 +2130,64 @@ ModuleNetworkPlot(
 ```
 
 
-### SCENIC
+### 12.3.2 레귤론 네트워크 추론
+#### SCENIC
 - https://pyscenic.readthedocs.io/en/latest/
 - https://htmlpreview.github.io/?https://github.com/aertslab/SCENIC/blob/master/Tutorials_JupyterNotebooks/SCENIC_tutorial_1-RunningVSN.html 
 
-## 11.4 궤적 및 가상 시간 분석 
-### slingshot
-[코드 11-16] Slingshot 을 이용한 궤적 및 가상 시간 분석 
-```{r}
+## 12.4 궤적 및 가상 시간 분석 
+
+### 12.4.1 최소 신장 트리 기반 궤적 분석
+#### Slingshot
+
+[코드 12-16] Slingshot을 이용한 궤적 및 가상 시간 분석
+```{r code12_16}
+# 필요한 패키지 설치 및 불러오기 
+BiocManager::install("kstreet13/slingshot")
+library(slingshot)
+library(scater)     # 단일세포 데이터 시각화 용 패키지
+library(Seurat)
+
+# 슈랏 오브젝트 데이터 불러와 준비하기
+pbmc_sample1 <- Read10X_h5("../data/count_SRR13911909/outs/filtered_feature_bc_matrix.h5")
+pbmc_sample1 <- CreateSeuratObject(counts = pbmc_sample1, project = "AD1", min.cells = 3, min.features = 200)
+pbmc_sample1 <- NormalizeData(pbmc_sample1)
+pbmc_sample1 <- FindVariableFeatures(pbmc_sample1)
+all.genes <- rownames(pbmc_sample1)
+pbmc_sample1 <- ScaleData(pbmc_sample1, features = all.genes)
+pbmc_sample1 <- RunPCA(pbmc_sample1)
+pbmc_sample1 <- FindNeighbors(pbmc_sample1, dims = 1:10)
+pbmc_sample1 <- FindClusters(pbmc_sample1, resolution = 0.5)
+pbmc_sample1 <- RunUMAP(pbmc_sample1, dims = 1:10)
+
+# 슈랏 오브젝트를 slingshot에 쓰이는 별도의 매트릭스로 저장하기
+dimred <- pbmc_sample1@reductions$umap@cell.embeddings
+clustering <- pbmc_sample1$seurat_clusters
+counts <- as.matrix(pbmc_sample1@assays$RNA$counts)
+
+# slingshot을 기본값으로 실행하기
+set.seed(1)
+lineages <- slingshot(data = dimred, clusterLabels = clustering)
+lineages
+```
+
+[코드 12-17] Slingshot 결과 시각화
+```{r code12_17, fig.width = 12}
+# UMAP에서 사용할 색깔 지정하기
+pal <- c(RColorBrewer::brewer.pal(9, "Set1"), RColorBrewer::brewer.pal(8, "Set2"))
+
+# slingshot 결과 UMAP에 시각화하기
+par(mfrow = c(1, 2))
+plot(dimred[, 1:2], col = pal[clustering], cex = 0.5, pch = 16)
+for (i in levels(clustering)) {
+  text(mean(dimred[clustering == i, 1]), mean(dimred[clustering == i, 2]), labels = i, font = 2)
+}
+plot(dimred[, 1:2], col = pal[clustering], cex = 0.5, pch = 16)
+lines(SlingshotDataSet(lineages), lwd = 2, col = "black")
+```
+
+[코드 12-18] 통합 샘플의 Slingshot 궤적 및 가상 시간 분석
+```{r code12_18}
 # TODO Slinghot 
 # 필요한 패키지 설치 및 불러오기 
 BiocManager::install("kstreet13/slingshot")
@@ -1937,57 +2196,68 @@ library(scater) # 단일 세포 데이터 시각용
 library(Seurat)
 
 # 슈랏 오브젝트를 singleCellExperiment 객체로 데이터 변환 
-pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combined_scTYPE_metadata.rds")
+# pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combined_scTYPE_metadata.rds")
 sce <- as.SingleCellExperiment(pbmc_alzheimer_SCT.combined, assay = "SCT")
 # slingshot 궤적 분석 
-sce.sling <- slingshot(sce, ster = sce@colData$integrated_snn_res.0.3, reducedDim='PCA')
+sce.sling <- slingshot(sce, reducedDim='PCA', clusterLabels = "customclassif") 
 # 계산된 가상 시간 데이터 확인 
 head(sce.sling$slingPseudotime_1)
 
 # UMAP 차원 축소에서 곡선 임베딩 
-embedded <- embedCurves(sce.sling, "UMAP")
+embedded <- embedCurves(sce.sling, "UMAP") # 이것도 오래 걸림 
 embedded <- slingCurves(embedded)[[1]] # only 1 path.
-embedded <- data.frame(embedded$s[embedded$ord,])
+embedded <- data.frame(embedded$s[embedded$ord,]) 
 
 # UMAP에 가상시간값을 색상으로 표현하고 궤적 곡선 추가 
 plotUMAP(sce.sling, colour_by="slingPseudotime_1") +
     geom_path(data=embedded, aes(x=umap_1, y=umap_2), size=1.2)
 ```
 
-```{r}
 
-```
+### 12.4.2 그래프 기반 궤적 분석
+#### Monocle3 
+[코드 12-] Monocle3를 이용한 궤적 분석 
 
-
-### Monocle3 
-[코드 11-] Monocle3를 이용한 궤적 분석 
-```{r}
+[코드 12-19] Monocle3를 이용한 궤적 분석
+```{r code12_19}
 # 필요한 패키지 설치 및 불러오기 
+BiocManager::install(c('BiocGenerics', 'DelayedArray', 'DelayedMatrixStats',
+                       'limma', 'lme4', 'S4Vectors', 'SingleCellExperiment',
+                       'SummarizedExperiment', 'batchelor', 'HDF5Array',
+                       'terra', 'ggrastr'))
 remotes::install_github('satijalab/seurat-wrappers')
 devtools::install_github('cole-trapnell-lab/monocle3')
-library(monocle3)
 library(SeuratWrappers)
+library(monocle3)
 
-# 슈랏 오브젝트를 CellDataSet 으로 변환하기 
-cds <- as.cell_data_set(pbmc_alzheimer_SCT.combined) 
+# 슈랏 오브젝트를 cell_data_set 으로 변환하기 
+cds <- as.cell_data_set(pbmc_alzheimer_SCT.combined)
+
 # 클러스터링 
-cds <- ster_cells(cds = cds, reduction_method = "UMAP")
+cds <- cluster_cells(cds = cds, reduction_method = "UMAP")
+
 # 궤적 분석 실행 
 cds <- learn_graph(cds, use_partition = TRUE)
 
 # 시각화 
 plot_cells(cds, 
            color_cells_by = "customclassif", 
-           label_groups_by_ster=FALSE, 
+           # label_groups_by_ster=FALSE, 
            label_leaves=FALSE, 
            label_branch_points=FALSE) 
+
+# 뿌리노드 선택하기 
+order_cells(cds) 
 ```
 
 
-## 11.5 세포 간 소통 
-### LIANA
-[코드 11-13 LIANA 실행 코드
-```{r}
+## 12.5 세포 간 소통
+### 12.5.2 단백질-리간드 상호작용 분석
+#### LIANA
+[코드 12-13 LIANA 실행 코드
+
+[코드 12-20] LIANA 실행 코드
+```{r code12_20}
 # LIANA 설치하기 
 remotes::install_github('saezlab/liana') 
 
@@ -1997,43 +2267,43 @@ library(magrittr)
 library(liana) 
 library(Seurat)
 
-# 슈랏 오브젝트 데이터 불러오기 
-# pbmc <- readRDS("pbmc_alzheimer_SCT.combined.rds") 
-pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combined_3500_scTYPE_metadata.rds")
+# 입력 데이터 설정 
 DefaultAssay(pbmc_alzheimer_SCT.combined)<-"SCT" 
 Idents(pbmc_alzheimer_SCT.combined) <- "customclassif" 
 
 # LIANA 실행 및 결과 확인  
 liana_test <- liana_wrap(pbmc_alzheimer_SCT.combined) 
+liana_test
 ```
 
-[코드 11-14] LIANA 실행한 종합 순위  
-```{r}
+[코드 12-21] LIANA 실행 결과 종합 순위
+```{r code12_21}
 # 모든 알고리즘 결과 종합하여 나타내기 
 liana_test <- liana_test %>% 
   liana_aggregate() 
 ```
 
-[코드 11-15] LIANA 결과 도트 플롯으로 시각화하기 
-```{r fig.wdith=10, fig.height=8}
-# LIANA 결과 시각화, 도트 플롯
+[코드 12-22] LIANA 결과 도트 플롯으로 시각화하기
+```{r code12_22, fig.wdith=10, fig.height=8}
+# 세포 유형 확인하기 
 unique(liana_test$source)
 
+# LIANA 결과 시각화, 도트 플롯
 liana_test %>% 
   liana_dotplot(source_groups = c("Naive CD4+ T cells"), 
-                target_groups = c("Naive CD4+ T cells", "Naive CD8+ T cells"), 
+                target_groups = c("Natural killer cells", "Naive CD8+ T cells"), 
                 ntop = 20) 
 ```
 
-### scriabin
-[코드 11-1] scriabin을 이용한 세포간 소통 상호작용 분석 
-```{r}
+#### scriabin
+[코드 12-23] scriabin을 이용한 세포 간 소통 상호작용 분석
+```{r code12_23}
 # 필요한 설치 및 불러오기 
 BiocManager::install("CelliD") 
-devtools::install_github("BlishLab/scriabin", ref = "main") 
+devtools::install_github("BlishLab/scriabin", ref = "main")
 library(scriabin) 
-library(tidyr)
-library(dplyr)
+# library(tidyr)
+# library(dplyr)
 
 # 상호작용 찾기 
 pbmc_scriabin <- FindAllInteractionPrograms( 
@@ -2060,8 +2330,10 @@ pbmc_scriabin_sig <- pbmc_scriabin_sig %>%
 pbmc_alzheimer_SCT.combined <- ScoreInteractionPrograms(pbmc_alzheimer_SCT.combined, pbmc_scriabin_sig)
 ```
 
-[코드 11-] scriabin 결과 시각화 하기
-```{r}
+[코드 12-] scriabin 결과 시각화 하기
+
+[코드 12-24] scriabin 결과 시각화하기
+```{r code12_24}
 # 힛맵을 그리기 위한 툴 불러오기상호작용 시각화하기 
 library(ComplexHeatmap) 
 library(tidyverse)
@@ -2077,21 +2349,34 @@ Heatmap(pbmc_scriabin_lig, show_column_names = F, name = "Ligands")
 
 
 # 리간드 상호작용 세포 유형별 힛맵 - 수용체 
-pbmc_scriabin_rec <- as.matrix(pbmc[["IPreceptors"]]@data %>% t() %>% 
+pbmc_scriabin_rec <- as.matrix(pbmc_alzheimer_SCT.combined[["IPreceptors"]]@data %>% t() %>% 
                               as.data.frame() %>% add_column(celltype = pbmc$customclassif) %>% 
                               group_by(celltype) %>% 
                               summarise_if(is.numeric, mean) %>% column_to_rownames("celltype")) 
 Heatmap(pbmc_scriabin_rec, show_column_names = F, name = "Receptors") 
 ```
 
-# 11.6. 복사수 변이 분석
-## Infercnv
-
-## CopyKAT
+## 12.6 복사수 변이 분석
+### 12.6.1 참조 기반 복사수 변이 추론
+#### InferCNV
+<!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
+BiocManager::install("infercnv")
+library(infercnv)
+
+
+```
+
+
+### 12.6.2 참조 비의존 복사수 변이 추론
+#### CopyKAT
+
+[코드 12-25] CopyKAT를 이용한 복사수 변이 분석 예시
+```{r code12_25}
 # 필요한 툴 설치 및 불러오기
+# devtools::install_github("navinlabcode/copykat")
 library(devtools)
-install_github("navinlabcode/copykat")
+devtools::install_github("navinlabcode/copykat")
 library(copykat)
 
 # 슈랏 오브젝트 데이터 불러와 준비하기
@@ -2112,12 +2397,34 @@ counts_matrix = LayerData(pbmc_sample1, assay = "RNA", layer = "counts")
 # 실행하기 (자동으로 결과가 저장됩니다.) 
 copykat.test <- copykat(rawmat= counts_matrix, id.type="S", ngene.chr=5, win.size=25,
 KS.cut=0.1, sam.name="test", distance="euclidean", 
-norm.cell.names="",output.seg="FLASE", plot.genes="TRUE",
+norm.cell.names="",output.seg="FALSE", plot.genes="TRUE",
 genome="hg20", n.cores=1)
 ```
 
-## scevan
-```{r}
-# TODO 
+#### SCEVAN
 
+[코드 12-26] SCEVAN을 이용한 복사수 변이 분석 예시
+```{r code12_26}
+# 필요한 툴 설치하기 
+library(devtools)
+install_github("miccec/yaGST")
+install_github("AntonioDeFalco/SCEVAN") 
+library(SCEVAN)
+
+# 실행하기
+count_mtx <- pbmc_alzheimer_SCT.combined[["RNA"]]$counts
+results <- pipelineCNA(count_mtx)
 ```
+
+
+
+
+
+# LINKS
+<!-- (책 수록 코드 아님: 참고/실험용) -->
+```{txt}
+# soupX 
+https://rawcdn.githack.com/constantAmateur/SoupX/204b602418df12e9fdb4b68775a8b486c6504fe4/inst/doc/pbmcTutorial.html 
+```
+
+
