@@ -28,6 +28,14 @@ Six samples from SRA study **SRP309935** (source: `data/SraRunTable.csv`):
 Only the `filtered_feature_bc_matrix.h5` output of each sample is tracked here. FASTQ files and
 the genome reference are too large to ship and must be downloaded.
 
+- FASTQ data: fetched by `src/CH04_sra_download.sh`.
+- Cell Ranger and the genome reference: download them yourself from the 10x Genomics
+  download center. It requires a login and license agreement, so no automated download
+  command can be shipped. `src/CH05_setup_cellranger.sh` documents where to get them and
+  how to unpack them.
+- The cell type annotation reference (`pbmc_multimodal_2023.rds`) is downloaded from R by
+  listing 10-6 in `src/singleCell_분석.Rmd`.
+
 ## Layout
 
 ```

@@ -26,6 +26,13 @@ SRA Study **SRP309935** 의 6개 샘플을 사용합니다. (출처: `data/SraRu
 저장소에는 셀 레인저 결과 중 `filtered_feature_bc_matrix.h5` 파일만 포함되어 있습니다.
 FASTQ 데이터와 참조서열은 용량이 크기 때문에 직접 내려받아야 합니다.
 
+- FASTQ 데이터: `src/CH04_sra_download.sh` 로 내려받습니다.
+- 셀 레인저와 참조서열: 10x Genomics 다운로드 센터에서 직접 내려받아야 합니다.
+  로그인과 약관 동의가 필요해 자동 다운로드 명령어를 제공할 수 없습니다.
+  받는 방법과 압축 해제 명령어는 `src/CH05_setup_cellranger.sh` 에 정리해두었습니다.
+- 세포 유형 주석용 참조 데이터(`pbmc_multimodal_2023.rds`)는
+  `src/singleCell_분석.Rmd` 의 [코드 10-6]이 R에서 자동으로 내려받습니다.
+
 ## 저장소 구조
 
 ```
