@@ -1557,8 +1557,9 @@ for (celltype in unique(pbmc_alzheimer_SCT.combined@meta.data$customclassif)){
                                      subset.ident = celltype,, only.pos = FALSE) 
 
   ## 결과를 CSV 파일로 저장 
-  write.csv(degs_severeADvsnormal, glue::glue( "../results/{celltype}_degs_severeADvsnormal.csv"), row.names = T)
-  write.csv(degs_mildADvsnormal, glue::glue( "../results/{celltype}_degs_mildADvsnormal.csv"), row.names = T)
+  celltype_file <- gsub(" ", "_", celltype)   # 파일 이름에 공백 대신 밑줄 사용하기
+  write.csv(degs_severeADvsnormal, glue::glue( "../results/{celltype_file}_degs_severeADvsnormal.csv"), row.names = T)
+  write.csv(degs_mildADvsnormal, glue::glue( "../results/{celltype_file}_degs_mildADvsnormal.csv"), row.names = T)
   
 }
 
@@ -1584,8 +1585,9 @@ run_DEGs_per_celltype <- function(seurat_obj, celltype) {
     arrange(-(avg_log2FC)) 
 
   ## 차등 발현 유전자 CSV 파일로 저장하기  
-  write.csv(degs_severeADvsnormal, glue::glue( "./results/{celltype}_degs_severeADvsnormal.csv"), row.names = T)
-  write.csv(degs_mildADvsnormal, glue::glue( "./results/{celltype}_degs_mildADvsnormal.csv"), row.names = T)
+  celltype_file <- gsub(" ", "_", celltype)   # 파일 이름에 공백 대신 밑줄 사용하기
+  write.csv(degs_severeADvsnormal, glue::glue( "./results/{celltype_file}_degs_severeADvsnormal.csv"), row.names = T)
+  write.csv(degs_mildADvsnormal, glue::glue( "./results/{celltype_file}_degs_mildADvsnormal.csv"), row.names = T)
 
   return(sobj_sub) 
 } 
@@ -1611,7 +1613,7 @@ sobj_subsets_list <- readRDS("./rds/sobj_subsets_list.rds")
 [코드 11-9] B 세포의 차등 발현 유전자 데이터 확인하기
 ```{r code11_9}
 # B 세포의 차등 발현 유전자 데이터 확인하기   
-degs_bcell <- read.csv("../results/Naive B cells_degs_severeADvsnormal.csv", stringsAsFactors = FALSE)
+degs_bcell <- read.csv("../results/Naive_B_cells_degs_severeADvsnormal.csv", stringsAsFactors = FALSE)
 
 # 상향 조절 유전자 들여다보기 
 degs_bcell_up <- degs_bcell %>% 
@@ -1734,7 +1736,7 @@ head(ranks)
 [코드 11-16] GSEA 실행하여 결과 저장하기
 ```{r code11_16}
 # GSEA 실행하여 저장하기 
-fgseaRes<- fgsea(fgsea_sets, stats = ranks, nperm = 1000) 
+fgseaRes<- fgsea(fgsea_sets, stats = ranks) 
 
 # 필요한 정보를 보기쉽게 저장하기 
 fgseaResTidy <- fgseaRes %>% as_tibble() %>% arrange(desc(NES)) 
