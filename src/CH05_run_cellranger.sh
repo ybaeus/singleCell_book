@@ -5,8 +5,6 @@
 FASTQS=../data/ 
 TRANSCRIPTOME=../data/refdata-gex-GRCh38-2024-A 
 
-cd ../data/ 
-
 SAMPLE=("SRR13911909" "SRR13911910" "SRR13911911" "SRR13911912" "SRR13911913" "SRR13911914")
 
 for i in "${SAMPLE[@]}"; do
