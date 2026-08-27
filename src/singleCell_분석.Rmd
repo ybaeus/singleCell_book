@@ -113,7 +113,7 @@ SRR13911909.h5.sobj@
 
 (심화)[코드 6-5] 많은 샘플 변환을 for 구문을 이용해 한 번에 실행하기
 ```{r code6_5}
-# install.packages("stringr")
+install.packages("stringr")
 library(stringr) # 문자열 데이터를 조작하고 분석하는 유용한 함수
 
 # data 폴더에 있는 파일들의 경로 얻기  
