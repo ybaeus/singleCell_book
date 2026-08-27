@@ -24,7 +24,7 @@ SRA Study **SRP309935** 의 6개 샘플을 사용합니다. (출처: `data/SraRu
 | SRR13911914 | GSM5145406 | 90 | patient with severe AD | blood |
 
 저장소에는 셀 레인저 결과 중 `filtered_feature_bc_matrix.h5` 파일만 포함되어 있습니다.
-FASTQ 원시 데이터와 참조서열은 용량이 크기 때문에 직접 내려받아야 합니다.
+FASTQ 데이터와 참조서열은 용량이 크기 때문에 직접 내려받아야 합니다.
 
 ## 저장소 구조
 
