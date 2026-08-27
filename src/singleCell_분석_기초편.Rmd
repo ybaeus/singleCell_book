@@ -66,7 +66,6 @@ count_SRR13911909 <- Read10X(data.dir =  "../data/count_SRR13911909/outs/filtere
 SRR13911909.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909, project = "pbmc_alzheimer")
 ```
 
-(참고)[코드 5-3] 슈랏 오브젝트 생성 두 가지 방법의 시간 비교해보기  
 해당 코드 블럭을 한번에 실행시켜줘야 정확한 시간을 얻을 수 있습니다. 한번에 하이라이트 해서 실행시키거나, 코드 블록의 오른쪽 위 화살표 버튼을 이용해서 실행해주세요. 
 
 [코드 6-3] 슈랏 오브젝트 생성 두 가지 방법의 시간 비교하기
@@ -274,7 +273,6 @@ seurat_objects_list <- lapply(seurat_objects_list, function(sobj) {
 
 # Chapter 07 데이터 전처리(정규화 및 통합)
 ## 7.1 로그 정규화 이용 
-[코드 6-1] 각 샘플별 로그 정규화 실행하기
 _NormalizeData()_: https://satijalab.org/seurat/reference/normalizedata 
 
 [코드 7-1] 각 샘플별 로그 정규화 실행하기
@@ -394,7 +392,6 @@ lognorm_list <- lapply(seurat_objects_list, function(x) {
 ```
 
 ## 7.2 SCTransform 정규화 이용
-[코드 6-6] SCTransform 정규화 실행하기
 _SCTransform()_: https://satijalab.org/seurat/reference/sctransform 
 
 [코드 7-6] SCTransform 정규화 실행하기
@@ -494,7 +491,7 @@ library(usethis)
 usethis::edit_r_environ() # 해당 코드를 실행하면 R 환경 설정 파일 ('.Renviron') 이 열립니다. 해당 파일에 'R_MAX_VSIZE=100Gb' 작성 후 저장한 후, R을 다시 시작하면 변경 사항이 적용됩니다. 
 ```
 
-(참고)[코드 6-14] future 패키지를 이용한 병렬 처리 설정
+(참고) future 패키지를 이용한 병렬 처리 설정
 <!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 # future 패키지 설치 및 불러오기  
@@ -650,8 +647,7 @@ pbmc_alzheimer_SCT.combined$orig.ident
 ```
 
 
-(심화)[코드 7-6] 차원축소 및 클러스터링 한번에 진행하기 
-[코드 8-8] 차원축소 및 클러스터링 한번에 진행하기
+(심화)[코드 8-8] 차원축소 및 클러스터링 한번에 진행하기
 ```{r code8_8}
 pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = FALSE) %>%
   RunUMAP(., reduction = "pca", dims = 1:30, verbose = FALSE) %>%
@@ -821,7 +817,7 @@ pbmc_alzheimer_SCT.combined@meta.data[c("Run", "AGE", "subject_status")] <-
   metadata_subset[match(pbmc_alzheimer_SCT.combined$Run, metadata_subset$Run), ]
 ```
 
-[코드 9-6] 함수 이용하기 예시 - 메타데이터 추가
+(심화)[코드 9-6] 함수 이용하기 예시 - 메타데이터 추가
 ```{r code9_6}
 # 메타 데이터 추가 함수 
 add_sample_name <- function(sobj, sample_metadata, adding_column_names){
@@ -1382,7 +1378,7 @@ tissue_guess = auto_detect_tissue_type(path_to_db_file = db_, seuratObject = pbm
 ```
 
 ### scanVI
-[코드 9-] scanVI 를 위한 라이브러리 설치 및 Seurat 오브젝트 변환 
+(참고) scanVI를 위한 라이브러리 설치 및 Seurat 오브젝트 변환
 <!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
 install.packages("reticulate") # python함수를 R에서 사용가능하게 도와주는 라이브러리 (TODO : 체크 하기) 
@@ -2216,8 +2212,6 @@ plotUMAP(sce.sling, colour_by="slingPseudotime_1") +
 
 ### 12.4.2 그래프 기반 궤적 분석
 #### Monocle3 
-[코드 12-] Monocle3를 이용한 궤적 분석 
-
 [코드 12-19] Monocle3를 이용한 궤적 분석
 ```{r code12_19}
 # 필요한 패키지 설치 및 불러오기 
@@ -2254,8 +2248,6 @@ order_cells(cds)
 ## 12.5 세포 간 소통
 ### 12.5.2 단백질-리간드 상호작용 분석
 #### LIANA
-[코드 12-13 LIANA 실행 코드
-
 [코드 12-20] LIANA 실행 코드
 ```{r code12_20}
 # LIANA 설치하기 
@@ -2329,8 +2321,6 @@ pbmc_scriabin_sig <- pbmc_scriabin_sig %>%
 # 상호작용 발현에 따라 세포 점수 매기기  
 pbmc_alzheimer_SCT.combined <- ScoreInteractionPrograms(pbmc_alzheimer_SCT.combined, pbmc_scriabin_sig)
 ```
-
-[코드 12-] scriabin 결과 시각화 하기
 
 [코드 12-24] scriabin 결과 시각화하기
 ```{r code12_24}
