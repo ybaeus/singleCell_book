@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# 저장소 어디에서 실행해도 되도록 스크립트 위치(src)로 이동합니다.
-cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
+# 이 스크립트가 있는 위치(src)를 작업 디렉터리로 삼습니다.
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+cd "$SCRIPT_DIR"
 
 SRR=("SRR13911909" "SRR13911910" "SRR13911911" "SRR13911912" "SRR13911913" "SRR13911914")
 
