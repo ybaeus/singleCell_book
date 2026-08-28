@@ -20,13 +20,3 @@ for i in "${SAMPLE_PATH}"*; do
     mv ${SAMPLE_PATH}${sample_name}/${sample_name}_2.fastq.gz ${SAMPLE_PATH}${sample_name}/${sample_name}_S1_L001_R2_001.fastq.gz
   fi
 done
-
-
-# SRR=("SRR13911909" "SRR13911910" "SRR13911911" "SRR13911912" "SRR13911913" "SRR13911914")
-
-# for i in "${SRR[@]}"; do
-#     echo "Changing FASTQ name of sample: $i" 
-#     mv i  --max-size 100g ${i}
-#     fasterq-dump ${i}/${i}.sra -o <output_dir>
-# done
-
