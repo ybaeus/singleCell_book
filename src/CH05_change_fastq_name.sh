@@ -16,8 +16,8 @@ for i in "${SAMPLE_PATH}"*; do
 
     # FASTQ 이름 셀 레인저 INPUT 형식으로 변경 
     ## R1 (바코드 및 UMI 시퀀스) 
-    mv ${SAMPLE_PATH}${sample_name}/${sample_name}_1.fastq.gz ${SAMPLE_PATH}${sample_name}/${sample_name}_S1_L001_R1_001.fastq.gz
+    mv "${SAMPLE_PATH}${sample_name}/${sample_name}_1.fastq.gz" "${SAMPLE_PATH}${sample_name}/${sample_name}_S1_L001_R1_001.fastq.gz"
     ## R2 (리드 시퀀스)
-    mv ${SAMPLE_PATH}${sample_name}/${sample_name}_2.fastq.gz ${SAMPLE_PATH}${sample_name}/${sample_name}_S1_L001_R2_001.fastq.gz
+    mv "${SAMPLE_PATH}${sample_name}/${sample_name}_2.fastq.gz" "${SAMPLE_PATH}${sample_name}/${sample_name}_S1_L001_R2_001.fastq.gz"
   fi
 done
