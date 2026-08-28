@@ -1617,13 +1617,13 @@ degs_bcell <- read.csv("../results/Naive_B_cells_degs_severeADvsnormal.csv", str
 
 # 상향 조절 유전자 들여다보기 
 degs_bcell_up <- degs_bcell %>% 
-  arrange(desc(avg_log2FC)) %>%             # log2FC가 큰 순서대로 정렬
-  filter(p_val_adj < 0.05 & avg_log2FC > 0)  # 유의미한(p < 0.05), log2FC > 0인 유전자 필터링
+  arrange(desc(avg_log2FC)) %>%                # log2FC가 큰 순서대로 정렬
+  filter(p_val_adj < 0.05 & avg_log2FC > 0.5)  # 유의미하고(p_val_adj < 0.05) 발현 차이가 뚜렷한 유전자만 선택
 
-# 하양 조절 유전자 들여다보기
+# 하향 조절 유전자 들여다보기
 degs_bcell_down <- degs_bcell %>% 
   arrange(desc(abs(avg_log2FC))) %>%  
-  filter(p_val_adj < 0.05 & avg_log2FC < 0) 
+  filter(p_val_adj < 0.05 & avg_log2FC < -0.5) 
 ```
 
 [코드 11-10] B 세포의 차등 발현 유전자 발현 패턴 시각화: 히트맵
