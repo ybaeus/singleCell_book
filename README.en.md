@@ -92,6 +92,8 @@ core packages, and the install lines in each section of chapter 12 for the extra
 1. **Data** - the tracked `h5` files let you start straight at Chapter 6. To build them from raw
    reads instead, run Chapters 4 and 5 in order:
 
+   The shell scripts locate themselves and switch to `src/`, so they work from anywhere in the repo.
+
    ```bash
    cd src
    bash CH04_sra_download.sh          # fetch FASTQ (can take many hours)
@@ -100,7 +102,9 @@ core packages, and the install lines in each section of chapter 12 for the extra
    ```
 
 2. **R analysis** - open `singleCell.Rproj` in RStudio and work through
-   `src/singleCell_분석.Rmd`. Chunks follow the book's order.
+   `src/singleCell_분석.Rmd`. Chunks follow the book's order. The notebook uses relative paths
+   like `../data/`, so knit it from `src/` (see `knitr::opts_knit$set(root.dir = getwd())` in the
+   first chunk).
 
 ## Code numbering
 

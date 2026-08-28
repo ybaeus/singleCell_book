@@ -56,38 +56,12 @@ FASTQ 데이터와 참조서열은 용량이 크기 때문에 직접 내려받�
 | 챕터 06 ~ 챕터 12 (R 분석 전 과정) | `src/singleCell_분석.Rmd` |
 | 챕터 12 CellBender (배경 RNA 제거) | `src/CH12_run_cellbender.sh` |
 
-## 환경 설정
-
-R과 실습에 필요한 도구는 pixi로 한 번에 준비할 수 있습니다.
-pixi 설치 방법은 공식 문서(pixi.sh)를 참고하세요.
-
-저장소 최상위에 다음과 같은 `pixi.toml` 파일을 만듭니다.
-
-```toml
-[project]
-name = "singleCell_book"
-channels = ["conda-forge", "bioconda"]
-platforms = ["linux-64", "osx-arm64"]
-
-[dependencies]
-r-base = "*"
-r-essentials = "*"
-```
-
-그 다음 환경을 설치하고 그 안에서 R을 실행합니다.
-
-```bash
-pixi install     # pixi.toml 에 적힌 환경 설치하기
-pixi run R       # 설치된 환경에서 R 실행하기
-```
-
-슈랏을 비롯한 R 패키지는 각 챕터의 코드에서 설치합니다.
-기본 패키지는 [코드 6-1], 챕터 12의 추가 분석 툴은 각 절의 설치 코드를 참고하세요.
-
 ## 시작하기
 
 1. **데이터 준비** - 저장소에 포함된 `h5` 파일로 바로 챕터 06부터 시작할 수 있습니다.
    원시 데이터부터 직접 만들어 보려면 챕터 04, 05 순서대로 진행합니다.
+
+   셸 스크립트는 자기 위치(`src/`)를 찾아 작업 디렉터리를 옮기므로 저장소 어디에서 실행해도 됩니다.
 
    ```bash
    cd src
@@ -97,7 +71,8 @@ pixi run R       # 설치된 환경에서 R 실행하기
    ```
 
 2. **R 분석** - RStudio에서 `singleCell.Rproj` 를 열고 `src/singleCell_분석.Rmd` 를 실행합니다.
-   코드 블록은 책의 챕터 순서대로 배치되어 있습니다.
+   코드 블록은 책의 챕터 순서대로 배치되어 있습니다. Rmd는 `../data/` 형태의 상대 경로를 쓰므로
+   반드시 `src/` 위치에서 실행해야 합니다(첫 청크의 `knitr::opts_knit$set(root.dir = getwd())` 참고).
 
 ## 코드 번호 규칙
 
