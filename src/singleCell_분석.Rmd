@@ -2185,7 +2185,6 @@ lines(SlingshotDataSet(lineages), lwd = 2, col = "black")
 
 [코드 12-18] 통합 샘플의 Slingshot 궤적 및 가상 시간 분석
 ```{r code12_18}
-# TODO Slinghot 
 # 필요한 패키지 설치 및 불러오기 
 BiocManager::install("kstreet13/slingshot")
 library(slingshot)
@@ -2193,7 +2192,7 @@ library(scater) # 단일 세포 데이터 시각용
 library(Seurat)
 
 # 슈랏 오브젝트를 singleCellExperiment 객체로 데이터 변환 
-# pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combined_scTYPE_metadata.rds")
+pbmc_alzheimer_SCT.combined <- readRDS("./rds/pbmc_alzheimer_SCT.combined_scTYPE_metadata.rds")
 sce <- as.SingleCellExperiment(pbmc_alzheimer_SCT.combined, assay = "SCT")
 # slingshot 궤적 분석 
 sce.sling <- slingshot(sce, reducedDim='PCA', clusterLabels = "customclassif") 
