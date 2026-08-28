@@ -714,8 +714,6 @@ DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "uma
 
 [코드 8-10] t-SNE 시각화하기
 ```{r code8_10}
-pbmc_alzheimer_SCT.combined <- RunTSNE(pbmc_alzheimer_SCT.combined, reduction = "pca", dims = 1:30, verbose = FALSE)
-
 # pdf("./results/TSNE_integrated_snn_res.0.1_0.3_0.5.pdf", width = 10)
 Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.1"
 DimPlot(pbmc_alzheimer_SCT.combined, label = T, label.size = 7, reduction = "tsne")
