@@ -2,10 +2,8 @@
 # [코드 5-4], [코드 5-5] 셀 레인저 카운트 실행
 # 책 챕터 05 (실습) 셀 레인저 카운트 실행
 
-# 이 스크립트가 있는 위치(src)를 작업 디렉터리로 삼습니다.
-# 저장소 어느 위치에서 실행해도 아래 상대 경로가 그대로 동작합니다.
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-cd "$SCRIPT_DIR"
+# 저장소 어디에서 실행해도 되도록 스크립트 위치(src)로 이동합니다.
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 
 FASTQS=../data/ 
 TRANSCRIPTOME=../data/refdata-gex-GRCh38-2024-A 

@@ -1,9 +1,7 @@
 #!/bin/bash
 
-# 이 스크립트가 있는 위치(src)를 작업 디렉터리로 삼습니다.
-# 저장소 어느 위치에서 실행해도 아래 상대 경로가 그대로 동작합니다.
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-cd "$SCRIPT_DIR"
+# 저장소 어디에서 실행해도 되도록 스크립트 위치(src)로 이동합니다.
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 
 SAMPLE_PATH="../data/" # 각 샘플 폴더에 fastq 파일들이 존재해야 합니다. (샘플 폴더s: "SRR13911909" "SRR13911910" "SRR13911911" "SRR13911912" "SRR13911913" "SRR13911914")
 
