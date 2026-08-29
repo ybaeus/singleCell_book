@@ -661,40 +661,40 @@ pbmc_alzheimer_SCT.combined <- RunPCA(pbmc_alzheimer_SCT.combined, verbose = FAL
 # Computing SNN
 # Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 # 
-# Number of nodes: 74584
-# Number of edges: 2794483
+# Number of nodes: 73252
+# Number of edges: 2746559
 # 
 # Running Louvain algorithm...
 # 0%   10   20   30   40   50   60   70   80   90   100%
 # [----|----|----|----|----|----|----|----|----|----|
 # **************************************************|
-# Maximum modularity in 10 random starts: 0.9711
+# Maximum modularity in 10 random starts: 0.9705
 # Number of communities: 11
-# Elapsed time: 42 seconds
+# Elapsed time: 25 seconds
 # Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 # 
-# Number of nodes: 74584
-# Number of edges: 2794483
+# Number of nodes: 73252
+# Number of edges: 2746559
 # 
 # Running Louvain algorithm...
 # 0%   10   20   30   40   50   60   70   80   90   100%
 # [----|----|----|----|----|----|----|----|----|----|
 # **************************************************|
-# Maximum modularity in 10 random starts: 0.9416
-# Number of communities: 16
-# Elapsed time: 34 seconds
+# Maximum modularity in 10 random starts: 0.9405
+# Number of communities: 15
+# Elapsed time: 24 seconds
 # Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 # 
-# Number of nodes: 74584
-# Number of edges: 2794483
+# Number of nodes: 73252
+# Number of edges: 2746559
 # 
 # Running Louvain algorithm...
 # 0%   10   20   30   40   50   60   70   80   90   100%
 # [----|----|----|----|----|----|----|----|----|----|
 # **************************************************|
-# Maximum modularity in 10 random starts: 0.9224
-# Number of communities: 22
-# Elapsed time: 33 seconds
+# Maximum modularity in 10 random starts: 0.9228
+# Number of communities: 21
+# Elapsed time: 24 seconds
 ```
 
 
