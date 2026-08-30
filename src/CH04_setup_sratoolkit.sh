@@ -39,10 +39,10 @@ sudo apt install wget
 # ---------------------------------------------------------------
 # 내려받은 SRA-Toolkit 버전에 맞게 폴더 이름을 바꿔주세요.
 # macOS
-export PATH=$PWD/sratoolkit.3.2.1-mac64/bin
+export PATH="$PWD/sratoolkit.3.2.1-mac64/bin:$PATH"
 
 # 리눅스 기반
-export PATH=$PWD/sratoolkit.3.2.1-ubuntu64/bin
+export PATH="$PWD/sratoolkit.3.2.1-ubuntu64/bin:$PATH"
 
 # ---------------------------------------------------------------
 # [코드 4-5] fasterq-dump로 샘플 하나만 내려받기
