@@ -39,7 +39,7 @@ sudo apt install wget
 # ---------------------------------------------------------------
 # 내려받은 SRA-Toolkit 버전에 맞게 폴더 이름을 바꿔주세요.
 # macOS
-export PATH="$PWD/sratoolkit.3.2.1-mac64/bin:$PATH"
+export PATH="$PWD/sratoolkit.3.2.1-mac-arm64/bin:$PATH"
 
 # 리눅스 기반
 export PATH="$PWD/sratoolkit.3.2.1-ubuntu64/bin:$PATH"

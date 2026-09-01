@@ -1174,6 +1174,9 @@ pbmc_alzheimer_avg_expr <- AverageExpression(object = pbmc_alzheimer_SCT.combine
 # 결과를 데이터프레임 형태로 변환하기
 pbmc_alzheimer_avg_expr <- as.data.frame(t(pbmc_alzheimer_avg_expr$SCT))
 
+# 여섯 샘플에서 값이 모두 같은(분산 0) 유전자는 스케일링할 수 없으므로 제외합니다.
+pbmc_alzheimer_avg_expr <- pbmc_alzheimer_avg_expr[, apply(pbmc_alzheimer_avg_expr, 2, var) > 0]
+
 # 평균 발현값을 이용해 주성분 분석(PCA) 수행하기
 pbmc_alzheimer_avg_expr_pca <- prcomp(pbmc_alzheimer_avg_expr, center = TRUE, scale = TRUE)
 
@@ -2098,10 +2101,9 @@ genome="hg20", n.cores=1)
 
 [코드 12-25] SCEVAN을 이용한 복사수 변이 분석 예시
 ```{r code12_25}
-# 필요한 툴 설치하기 
-library(devtools)
-install_github("miccec/yaGST")
-install_github("AntonioDeFalco/SCEVAN") 
+# 필요한 툴 설치하기
+devtools::install_github("miccec/yaGST")
+devtools::install_github("AntonioDeFalco/SCEVAN")
 library(SCEVAN)
 
 # 실행하기
