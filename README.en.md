@@ -36,6 +36,18 @@ the genome reference are too large to ship and must be downloaded.
 - The cell type annotation reference (`pbmc_multimodal_2023.rds`) is downloaded from R by
   listing 10-6 in `src/singleCell_분석.Rmd`.
 
+The listings below read other files from the Cell Ranger `outs` folder, so they can only be
+followed if you ran Cell Ranger yourself in chapter 05.
+
+| Listing | Files it needs |
+|---------|----------------|
+| Listing 6-2, second method (MEX folder); listing 6-3 | `outs/filtered_feature_bc_matrix/` |
+| Listings 12-6 and 12-7 (SoupX) | `outs/raw_feature_bc_matrix/`, `outs/filtered_feature_bc_matrix/`, `outs/analysis/` |
+| `CH12_run_cellbender.sh` (CellBender) | `outs/raw_feature_bc_matrix.h5` |
+
+If you only downloaded the h5 files, use the first method in listing 6-2 and skip the rest. The
+remaining analysis is unaffected.
+
 ## Layout
 
 ```
@@ -53,7 +65,7 @@ the genome reference are too large to ship and must be downloaded.
 
 | Book chapter | File |
 |--------------|------|
-| Ch. 02 R basics | `src/CH02_R.qmd`, `src/CH02_R.R` |
+| Ch. 02 R basics | `src/CH02_R.qmd` |
 | Ch. 04 Downloading sequencing data | `src/CH04_setup_sratoolkit.sh`, `src/CH04_sra_download.sh`, `src/CH04_sra_download_multithread.sh` |
 | Ch. 05 Cell Ranger | `src/CH05_setup_cellranger.sh`, `src/CH05_change_fastq_name.sh`, `src/CH05_run_cellranger.sh` |
 | Ch. 06 - Ch. 12 (the whole R workflow) | `src/singleCell_분석.Rmd` |

@@ -33,6 +33,18 @@ FASTQ 데이터와 참조서열은 용량이 크기 때문에 직접 내려받�
 - 세포 유형 주석용 참조 데이터(`pbmc_multimodal_2023.rds`)는
   `src/singleCell_분석.Rmd` 의 [코드 10-6]이 R에서 자동으로 내려받습니다.
 
+셀 레인저 `outs` 폴더의 다른 파일을 읽는 다음 코드는 챕터 05에서 셀 레인저를 직접 실행한
+경우에만 따라 할 수 있습니다.
+
+| 코드 | 필요한 파일 |
+|------|-------------|
+| [코드 6-2]의 두 번째 방법(MEX 폴더), [코드 6-3] | `outs/filtered_feature_bc_matrix/` |
+| [코드 12-6], [코드 12-7] (SoupX) | `outs/raw_feature_bc_matrix/`, `outs/filtered_feature_bc_matrix/`, `outs/analysis/` |
+| [코드 CH12_run_cellbender.sh] (CellBender) | `outs/raw_feature_bc_matrix.h5` |
+
+h5 파일만 내려받았다면 [코드 6-2]는 첫 번째 방법으로 진행하고, 위 나머지 코드는 건너뛰어도
+이후 분석 흐름에는 영향이 없습니다.
+
 ## 저장소 구조
 
 ```
@@ -50,7 +62,7 @@ FASTQ 데이터와 참조서열은 용량이 크기 때문에 직접 내려받�
 
 | 책 챕터 | 파일 |
 |---------|------|
-| 챕터 02 단일세포 데이터 분석과 기본 코드 | `src/CH02_R.qmd`, `src/CH02_R.R` |
+| 챕터 02 단일세포 데이터 분석과 기본 코드 | `src/CH02_R.qmd` |
 | 챕터 04 시퀀싱 데이터 다운로드 | `src/CH04_setup_sratoolkit.sh`, `src/CH04_sra_download.sh`, `src/CH04_sra_download_multithread.sh` |
 | 챕터 05 셀 레인저 설치 및 실행 | `src/CH05_setup_cellranger.sh`, `src/CH05_change_fastq_name.sh`, `src/CH05_run_cellranger.sh` |
 | 챕터 06 ~ 챕터 12 (R 분석 전 과정) | `src/singleCell_분석.Rmd` |
