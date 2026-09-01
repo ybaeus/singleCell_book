@@ -34,20 +34,22 @@ knitr::opts_knit$set(root.dir = getwd()) # 스크립크 위치를 작업 디렉�
 ## 6.1 슈랏 오브젝트 만들기 
 [코드 6-1] 필요한 패키지 설치 및 불러오기
 ```{r code6_1}
-# 필요한 패키지 설치  
-# 1
-install.packages("Seurat") 
-remotes::install_github("satijalab/seurat", "seurat5", quiet = TRUE)
-install.packages("dplyr") 
-install.packages("hdf5r")
-install.packages("BiocManager")
-BiocManager::install("glmGamPoi")
+# 필요한 패키지 설치하기
+install.packages("Seurat")               # 단일세포 분석 패키지
+install.packages("dplyr")                # 데이터 핸들링 패키지
+install.packages("hdf5r")                # h5 파일 읽기/쓰기용 패키지
+install.packages("future")               # 병렬 처리 패키지
+install.packages("BiocManager")          # Bioconductor 패키지 관리
+BiocManager::install("glmGamPoi")        # SCTransform의 속도 향상을 돕는 패키지
 
-# 패키지 불러오기  
-library(Seurat) 
-library(dplyr) 
+
+# 패키지 불러오기
+library(Seurat)
+library(dplyr)
 library(hdf5r)
 library(glmGamPoi)
+library(future)
+options(future.globals.maxSize = 100 * 1024^3)  # 100 GiB
 ```
 
 [코드 6-2] 2가지 방법으로 슈랏 오브젝트 생성하기
@@ -69,13 +71,13 @@ SRR13911909.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909, project =
 start <- Sys.time() # 시작 시간 
 count_SRR13911909.h5 <- Read10X_h5("../data/count_SRR13911909/outs/filtered_feature_bc_matrix.h5")
 SRR13911909.h5.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909.h5, project = "pbmc_alzheimer")
-print( Sys.time() - start ) # 현재 시간 – 시작 시간 = 총 걸린 시간 (4.866736 secs)
+print( Sys.time() - start ) # 현재 시간 – 시작 시간 = 총 걸린 시간 (저자 환경: 2.76초)
 
-# [2] Market Exchange Format(MEX) 구조 폴더 이용하기  
+# [2] Market Exchange Format(MEX) 구조 폴더 이용하기
 start <- Sys.time()
 count_SRR13911909 <- Read10X(data.dir = "../data/count_SRR13911909/outs/filtered_feature_bc_matrix/")
 SRR13911909.sobj_ori <- CreateSeuratObject(counts = count_SRR13911909, project = "pbmc_alzheimer")
-print( Sys.time() - start )
+print( Sys.time() - start ) # (저자 환경: 6.23초)
 ```
 
 [코드 6-4] 모든 샘플을 슈랏 오브젝트로 변형하기(최소 발현량, 발현 세포 문턱값 적용)
@@ -344,8 +346,7 @@ _SCTransform()_: https://satijalab.org/seurat/reference/sctransform
 
 [코드 7-6] SCTransform 정규화 실행하기
 ```{r code7_6}
-options(future.globals.maxSize = 100 * 1024^3)  # 1000=1GB
-SRR13911909.h5.sobj_SCT <- SCTransform(SRR13911909.h5.sobj, vars.to.regress = "percent.mt", verbose = TRUE) 
+SRR13911909.h5.sobj_SCT <- SCTransform(SRR13911909.h5.sobj, vars.to.regress = "percent.mt", verbose = TRUE)
 SRR13911910.h5.sobj_SCT <- SCTransform(SRR13911910.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
 SRR13911911.h5.sobj_SCT <- SCTransform(SRR13911911.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
 SRR13911912.h5.sobj_SCT <- SCTransform(SRR13911912.h5.sobj, vars.to.regress = "percent.mt", verbose = FALSE) 
@@ -392,6 +393,7 @@ gc()
 
 (참고) [코드 7-11] 필요 없는 오브젝트들 일부 정리
 ```{r code7_11}
+rm(SRR13911909.h5.sobj_SCT, SRR13911910.h5.sobj_SCT, SRR13911911.h5.sobj_SCT, SRR13911912.h5.sobj_SCT, SRR13911913.h5.sobj_SCT, SRR13911914.h5.sobj_SCT)
 rm(count_SRR13911909.h5, count_SRR13911910.h5, count_SRR13911911.h5, count_SRR13911912.h5, count_SRR13911913.h5, count_SRR13911914.h5)
 rm(SRR13911909.h5.sobj_ori, SRR13911909.h5.sobj, SRR13911910.h5.sobj, SRR13911911.h5.sobj, SRR13911912.h5.sobj, SRR13911913.h5.sobj, SRR13911914.h5.sobj)
 rm(SRR13911909.h5.sobj_norm, SRR13911910.h5.sobj_norm, SRR13911911.h5.sobj_norm, SRR13911912.h5.sobj_norm, SRR13911913.h5.sobj_norm, SRR13911914.h5.sobj_norm)
@@ -579,7 +581,7 @@ SCT_merged <- merge(pbmc_alzheimer_SCT.list[[1]], y = pbmc_alzheimer_SCT.list[-1
 
 (참고)[코드 9-2] 배치 효과 교정 없이 슈랏 오브젝트들 합치기 - 샘플 이름 이용
 ```{r code9_2}
-SCT_merged_named <- merge(SRR13911909.h5.sobj_SCT, y = c(SRR13911910.h5.sobj_SCT), add.cell.ids = c("SRR13911909", "SRR13911910"), project = "pbmc_alzheimer")
+SCT_merged_named <- merge(pbmc_alzheimer_SCT.list[[1]], y = pbmc_alzheimer_SCT.list[[2]], add.cell.ids = c("SRR13911909", "SRR13911910"), project = "pbmc_alzheimer")
 ```
 
 [코드 9-3] 배치 효과 교정 없이 합쳐진 슈랏 오브젝트 차원 축소
@@ -813,14 +815,9 @@ DefaultAssay(pbmc_alzheimer_SCT.combined) <- "SCT"
 Idents(pbmc_alzheimer_SCT.combined) <- "integrated_snn_res.0.3"
 
 # 각 클러스터의 유전자 마커 찾기 (다소 오래 걸릴 수 있습니다.)
-# job::job()은 감싼 코드를 RStudio의 별도 R 세션에서 백그라운드로 실행합니다.
-# 오래 걸리는 계산 중에도 콘솔을 계속 쓸 수 있습니다. 다만 결과가 돌아오기 전에
-# 아래 saveRDS가 먼저 실행될 수 있으니, 작업이 끝난 것을 확인하고 저장하세요.
-job::job({
-  markers <- FindAllMarkers(pbmc_alzheimer_SCT.combined , only.pos = TRUE)
-})
+markers <- FindAllMarkers(pbmc_alzheimer_SCT.combined, only.pos = TRUE)
 
-# 마커 정보 rds 파일로 저장하기 
+# 마커 정보 rds 파일로 저장하기
 saveRDS(markers, "./rds/pbmc_alzheimer_SCT_CCA_UMAP_markers_res_0.3.rds")
 ```
 
@@ -1476,7 +1473,7 @@ ggplot(fgseaResTidy %>% head(n= 50), aes(reorder(pathway, NES), NES)) +
 [코드 11-18] 개별 유전자 그룹 시각화하기
 ```{r code11_18}
 plotEnrichment(fgsea_sets[["HALLMARK_INTERFERON_ALPHA_RESPONSE"]], ranks) + 
-  labs(title="HALLMARK_ INTERFERON_ALPHA_RESPONSE ") 
+  labs(title="HALLMARK_INTERFERON_ALPHA_RESPONSE") 
 ```
 
 Time series
@@ -1555,8 +1552,7 @@ pbmc_alzheimer_SCT.list_processed_doublefinder <- lapply(pbmc_alzheimer_SCT.list
   nExp_poi <- round(0.075 * nrow(sobj@meta.data))
   # DoubletFinder 실행
   # pK 최적값을 구하는 방법은 [코드 12-2]를 참고하세요.
-  sobj_doublefinder <- doubletFinder(sobj, PCs = 1:10, pN = 0.25, pK = 0.09, nExp = nExp_poi, reuse.pANN = FALSE, sct = TRUE)  
-  # TODO: Error in xtfrm.data.frame(x) : cannot xtfrm data frames
+  sobj_doublefinder <- doubletFinder(sobj, PCs = 1:10, pN = 0.25, pK = 0.09, nExp = nExp_poi, sct = TRUE)
 })
 ```
 
@@ -1568,6 +1564,7 @@ pbmc_alzheimer_SCT.combined<-PrepSCTFindMarkers(pbmc_alzheimer_SCT.combined)
 sweep.list <- paramSweep(pbmc_alzheimer_SCT.combined, PCs=1:10, sct=TRUE)
 sweep.stats <- summarizeSweep(sweep.list, GT=FALSE)
 bcmvn <- find.pK(sweep.stats)
+bcmvn
 ```
 
 <!-- (책 수록 코드 아님: 참고/실험용) -->
@@ -1578,12 +1575,12 @@ pbmc_alzheimer_SCT.list_processed_doublefinder[[1]]@meta.data[1:5,]
 
 [코드 12-3] DoubletFinder 실행 결과 시각화 예시
 ```{r code12_3}
-DimPlot(pbmc_alzheimer_SCT.list_processed_doublefinder[[1]],  group.by = "DF.classifications_0.25_0.09_860") 
+DimPlot(pbmc_alzheimer_SCT.list_processed_doublefinder[[1]],  group.by = "DF.classifications_0.25_0.09_827") 
 ```
 
 <!-- (책 수록 코드 아님: 참고/실험용) -->
 ```{r}
-# pbmc_alzheimer_SCT.list_processed_doublefinder[[1]] <- subset(pbmc_alzheimer_SCT.list_processed_doublefinder[[1]], subset = DF.classifications_0.25_0.09_860 == "Singlet")
+# pbmc_alzheimer_SCT.list_processed_doublefinder[[1]] <- subset(pbmc_alzheimer_SCT.list_processed_doublefinder[[1]], subset = DF.classifications_0.25_0.09_827 == "Singlet")
 # # TODO 
 ```
 
@@ -2072,8 +2069,6 @@ library(infercnv)
 [코드 12-24] CopyKAT를 이용한 복사수 변이 분석 예시
 ```{r code12_24}
 # 필요한 툴 설치 및 불러오기
-# devtools::install_github("navinlabcode/copykat")
-library(devtools)
 devtools::install_github("navinlabcode/copykat")
 library(copykat)
 
