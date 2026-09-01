@@ -2102,8 +2102,9 @@ genome="hg20", n.cores=1)
 [코드 12-25] SCEVAN을 이용한 복사수 변이 분석 예시
 ```{r code12_25}
 # 필요한 툴 설치하기
-devtools::install_github("miccec/yaGST")
-devtools::install_github("AntonioDeFalco/SCEVAN")
+library(devtools)
+install_github("miccec/yaGST")
+install_github("AntonioDeFalco/SCEVAN")
 library(SCEVAN)
 
 # 실행하기
