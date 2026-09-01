@@ -1,5 +1,3 @@
-**한국어** | [English](#english)
-
 # 참고할 만한 웹사이트
 
 책 『실전 단일세포 데이터 분석』의 부록 "참고할 만한 웹사이트" 목록입니다.
@@ -86,24 +84,3 @@
 | 단일세포 데이터와 관련된 모든 툴을 모아둔 웹사이트 | https://www.scrna-tools.org/tools |
 | Single-cell best practices (방법론 중심, 파이썬 기반) | https://www.sc-best-practices.org |
 | Orchestrating Single-Cell Analysis with Bioconductor | https://bioconductor.org/books/release/OSCA |
-
----
-
-<a name="english"></a>
-
-# Further reading
-
-Links from the appendix of *실전 단일세포 데이터 분석* (Practical Single-Cell Data
-Analysis), grouped by book chapter. The tables above are in Korean, but the links
-themselves are language-neutral - use the chapter headings to find what you need:
-
-- **챕터 01** - 10x Genomics platform overview
-- **챕터 04** - downloading data (SRA-Toolkit, ENA)
-- **챕터 06 ~ 09** - Seurat basics, SCTransform, integration, Harmony
-- **챕터 10** - cell type annotation (reference mapping, Azimuth, SingleR, scType)
-- **챕터 11** - downstream analysis (fgsea)
-- **챕터 12** - extra tools (doublets, ambient RNA, clustering, networks, trajectories, cell-cell communication)
-- **더 공부하고 싶다면** - scRNA-tools, Single-cell best practices, OSCA
-
-All links were checked in August 2026. Suggestions are welcome via pull request;
-if a listing stops working because a package changed, please open an issue.
