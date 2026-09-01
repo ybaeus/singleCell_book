@@ -19,20 +19,21 @@ add_numbers <- function(a, b) {
 add_numbers(10,7) 
 ```
 
-[코드 2-2] ggplot2 패키지 설치 
+[코드 2-2] ggplot2와 슈랏 패키지 설치
 ```{r}
-install.packages("ggplot2") 
+install.packages("ggplot2")
+install.packages("Seurat")
 ```
 
 
-[코드 2-3] BiocManager를 통한 슈랏 패키지 설치
+[코드 2-3] BiocManager를 통한 바이오컨덕터 패키지 설치
 ```{r}
-# BiocManger 패키지 설치 및 버전 확인하기 
-install.packages("BiocManager") 
-BiocManager::version() 
+# BiocManager 패키지 설치 및 버전 확인하기
+install.packages("BiocManager")
+BiocManager::version()
 
-# 슈랏 설치하기
-BiocManager::install("Seurat") 
+# 바이오컨덕터 패키지 설치하기 예시
+BiocManager::install("SingleCellExperiment")
 ```
 
 [코드 2-4] 예제 데이터 생성 코드 

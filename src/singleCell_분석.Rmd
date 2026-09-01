@@ -106,8 +106,9 @@ SRR13911914.h5.sobj <- CreateSeuratObject(counts = count_SRR13911914.h5, project
 ```
 
 <!-- (책 수록 코드 아님: 참고/실험용) -->
-```{r}
-SRR13911909.h5.sobj@
+```{r eval=FALSE}
+# 콘솔에서 객체 이름 뒤에 @ 를 입력하고 Tab 을 눌러 슬롯 목록을 확인해보세요.
+# SRR13911909.h5.sobj@
 ```
 
 
@@ -426,6 +427,7 @@ pbmc_alzheimer_SCT.list <- list(SRR13911909.h5.sobj_SCT, SRR13911910.h5.sobj_SCT
 ```{r code7_9}
 # 오브젝트 저장 
 saveRDS(pbmc_alzheimer_SCT.list, "./rds/pbmc_alzheimer_SCT.list.rds")
+saveRDS(lognorm_list, "./rds/lognorm_list.rds")   # [코드 7-4]의 리스트, 챕터 09에서 사용
 
 # 오브젝트 불러오기 
 pbmc_alzheimer_SCT.list <- readRDS("./rds/pbmc_alzheimer_SCT.list.rds")
@@ -938,8 +940,11 @@ DimPlot(SCT_merged, pt.size = 0.01, group.by = "Run", reduction = "umap.sct.harm
 
 [코드 9-11] 로그 정규화한 샘플들의 통합된 표현 공간 생성 및 시각화
 ```{r code9_11}
+# [코드 7-9]에서 저장한 로그 정규화 리스트 불러오기
+lognorm_list <- readRDS("./rds/lognorm_list.rds")
+
 # 로그 정규화 된 샘플들을 하나의 오브젝트로 합치기  
-Lognorm_merged <- merge(SRR13911909.h5.sobj_norm, y= c(SRR13911910.h5.sobj_norm, SRR13911911.h5.sobj_norm, SRR13911912.h5.sobj_norm, SRR13911913.h5.sobj_norm, SRR13911914.h5.sobj_norm))
+Lognorm_merged <- merge(lognorm_list[[1]], y = lognorm_list[-1], project = "pbmc_alzheimer")
 
 # 데이터 전처리 
 Lognorm_merged <- FindVariableFeatures(Lognorm_merged)
@@ -1544,24 +1549,33 @@ for (celltype in unique(pbmc_alzheimer_SCT.combined@meta.data$customclassif)){
   # 현재 분석 중인 세포 유형 출력
   print(glue::glue("### {celltype} is processing ...")) 
   
-  ## 해당 세포 유형만 추출한 뒤 부분집합에서 SCT 카운트를 다시 보정하기
-  ## (세포를 자르면 샘플별 라이브러리 크기가 달라져 재보정이 필요함)
+  ## 해당 세포 유형만 추출
   sub <- subset(pbmc_alzheimer_SCT.combined, idents = celltype)
-  sub <- PrepSCTFindMarkers(sub)
-  
+
+  ## 그룹당 세포가 너무 적으면 차등 발현 검정이 성립하지 않음
+  grp <- table(sub$subject_status)
+  if (min(grp) < 30) {
+    message(glue::glue("{celltype}: skipped (smallest group has only {min(grp)} cells)"))
+    next
+  }
+
   ## 중증 환자 vs 일반인  
+  ## recorrect_umi = FALSE: [코드 11-3]에서 전체 객체에 PrepSCTFindMarkers()를
+  ## 이미 적용했으므로 부분집합에서 다시 보정하지 않음
   degs_severeADvsnormal <- FindMarkers(sub, 
                                        ident.1 = "patient with severe AD", 
                                        ident.2 = "normal individual",
                                        group.by = "subject_status",
-                                       only.pos = FALSE)
+                                       only.pos = FALSE,
+                                       recorrect_umi = FALSE)
   
   ## 경증 환자 vs 일반인  
   degs_mildADvsnormal <- FindMarkers(sub, 
                                      ident.1 = "patient with mild AD", 
                                      ident.2 = "normal individual", 
                                      group.by = "subject_status",
-                                     only.pos = FALSE) 
+                                     only.pos = FALSE,
+                                     recorrect_umi = FALSE) 
 
   ## 결과를 CSV 파일로 저장 
   celltype_file <- gsub(" ", "_", celltype)   # 파일 이름에 공백 대신 밑줄 사용하기
@@ -1969,14 +1983,12 @@ plotChangeMap(sc, out, "ISG15")
 
 #### CellBender
 
-[코드 12-10] CellBender를 이용하여 배경 RNA 제거하기 bash 예시 코드
-```{bash code12_10, eval=FALSE}
+[코드 CH12_run_cellbender.sh] CellBender로 배경 RNA 제거하기
+```{bash codeCH12_run_cellbender, eval=FALSE}
 #!/bin/bash
 cellbender remove-background \
   --input raw_feature_bc_matrix.h5 \
   --output output.h5 \
-  --expected-cells (value) \
-  --total-droplets-included (value) \
   --fpr 0.01 \
   --epochs 150
 ```
@@ -2010,8 +2022,8 @@ pbmc_alzheimer_SCT.combined[["decontXcounts"]] <- CreateAssayObject(counts = dec
 
 ## 12.2 클러스터링
 ### 12.2.1 최적의 해상도(resolution) 선택
-[코드 12-11] 현재 슈랏 오브젝트에 클러스트리 실행
-```{r code12_11}
+[코드 12-10] 현재 슈랏 오브젝트에 클러스트리 실행
+```{r code12_10}
 # 클러스트리 설치하고 불러오기
 BiocManager::install("clustree")
 library(clustree)
@@ -2020,8 +2032,8 @@ library(clustree)
 clustree(pbmc_alzheimer_SCT.combined, prefix = "integrated_snn_res.")
 ```
 
-[코드 12-12] 더 많은 해상도를 이용하여 클러스터링 및 클러스트리 실행
-```{r code12_12}
+[코드 12-11] 더 많은 해상도를 이용하여 클러스터링 및 클러스트리 실행
+```{r code12_11}
 # 슈랏 오브젝트 준비시키기
 DefaultAssay(pbmc_alzheimer_SCT.combined) <- "integrated"
 
@@ -2038,8 +2050,8 @@ clustree(pbmc_alzheimer_SCT.combined, prefix = "integrated_snn_res.")
 ## 12.3 유전자 네트워크 분석
 ### 12.3.1 공동 발현 네트워크 추론
 #### hdWGCNA
-[코드 12-13] hdWGCNA 실행에 필요한 라이브러리 설치 및 불러오기
-```{r code12_13}
+[코드 12-12] hdWGCNA 실행에 필요한 라이브러리 설치 및 불러오기
+```{r code12_12}
 # 필요한 패키지 설치 및 불러오기  
 BiocManager::install(c("WGCNA", "igraph", "devtools", "GeneOverlap", "ggrepel", "UCell")) 
 devtools::install_github("NightingaleHealth/ggforestplot") 
@@ -2054,8 +2066,8 @@ theme_set(theme_cowplot())
 allowWGCNAThreads() 
 ```
 
-[코드 12-14] hdWGCNA을 이용한 네트워크 분석 1
-```{r code12_14}
+[코드 12-13] hdWGCNA을 이용한 네트워크 분석 1
+```{r code12_13}
 # 슈랏 오브젝트 불러오기와 설정하기
 pbmc_sample1 <- Read10X_h5("SRR13911909_filtered_feature_bc_matrix.h5")
 pbmc_sample1 <- CreateSeuratObject(counts = pbmc_sample1, project = "AD1", min.cells = 3, min.features = 200)
@@ -2108,8 +2120,8 @@ plot_list <- PlotSoftPowers(pbmc_sample1)
 wrap_plots(plot_list, ncol=2)
 ```
 
-[코드 12-15] hdWGCNA을 이용한 네트워크 분석 2
-```{r code12_15}
+[코드 12-14] hdWGCNA을 이용한 네트워크 분석 2
+```{r code12_14}
 # 공통발현 네트워크 구축하기
 pbmc_sample1 <- ConstructNetwork(
   pbmc_sample1, 
@@ -2145,8 +2157,8 @@ ModuleNetworkPlot(
 ### 12.4.1 최소 신장 트리 기반 궤적 분석
 #### Slingshot
 
-[코드 12-16] Slingshot을 이용한 궤적 및 가상 시간 분석
-```{r code12_16}
+[코드 12-15] Slingshot을 이용한 궤적 및 가상 시간 분석
+```{r code12_15}
 # 필요한 패키지 설치 및 불러오기 
 BiocManager::install("kstreet13/slingshot")
 library(slingshot)
@@ -2176,8 +2188,8 @@ lineages <- slingshot(data = dimred, clusterLabels = clustering)
 lineages
 ```
 
-[코드 12-17] Slingshot 결과 시각화
-```{r code12_17, fig.width = 12}
+[코드 12-16] Slingshot 결과 시각화
+```{r code12_16, fig.width = 12}
 # UMAP에서 사용할 색깔 지정하기
 pal <- c(RColorBrewer::brewer.pal(9, "Set1"), RColorBrewer::brewer.pal(8, "Set2"))
 
@@ -2191,8 +2203,8 @@ plot(dimred[, 1:2], col = pal[clustering], cex = 0.5, pch = 16)
 lines(SlingshotDataSet(lineages), lwd = 2, col = "black")
 ```
 
-[코드 12-18] 통합 샘플의 Slingshot 궤적 및 가상 시간 분석
-```{r code12_18}
+[코드 12-17] 통합 샘플의 Slingshot 궤적 및 가상 시간 분석
+```{r code12_17}
 # 필요한 패키지 설치 및 불러오기 
 BiocManager::install("kstreet13/slingshot")
 library(slingshot)
@@ -2220,8 +2232,8 @@ plotUMAP(sce.sling, colour_by="slingPseudotime_1") +
 
 ### 12.4.2 그래프 기반 궤적 분석
 #### Monocle3 
-[코드 12-19] Monocle3를 이용한 궤적 분석
-```{r code12_19}
+[코드 12-18] Monocle3를 이용한 궤적 분석
+```{r code12_18}
 # 필요한 패키지 설치 및 불러오기 
 BiocManager::install(c('BiocGenerics', 'DelayedArray', 'DelayedMatrixStats',
                        'limma', 'lme4', 'S4Vectors', 'SingleCellExperiment',
@@ -2256,8 +2268,8 @@ order_cells(cds)
 ## 12.5 세포 간 소통
 ### 12.5.2 단백질-리간드 상호작용 분석
 #### LIANA
-[코드 12-20] LIANA 실행 코드
-```{r code12_20}
+[코드 12-19] LIANA 실행 코드
+```{r code12_19}
 # LIANA 설치하기 
 remotes::install_github('saezlab/liana') 
 
@@ -2276,15 +2288,15 @@ liana_test <- liana_wrap(pbmc_alzheimer_SCT.combined)
 liana_test
 ```
 
-[코드 12-21] LIANA 실행 결과 종합 순위
-```{r code12_21}
+[코드 12-20] LIANA 실행 결과 종합 순위
+```{r code12_20}
 # 모든 알고리즘 결과 종합하여 나타내기 
 liana_test <- liana_test %>% 
   liana_aggregate() 
 ```
 
-[코드 12-22] LIANA 결과 도트 플롯으로 시각화하기
-```{r code12_22, fig.wdith=10, fig.height=8}
+[코드 12-21] LIANA 결과 도트 플롯으로 시각화하기
+```{r code12_21, fig.wdith=10, fig.height=8}
 # 세포 유형 확인하기 
 unique(liana_test$source)
 
@@ -2296,8 +2308,8 @@ liana_test %>%
 ```
 
 #### scriabin
-[코드 12-23] scriabin을 이용한 세포 간 소통 상호작용 분석
-```{r code12_23}
+[코드 12-22] scriabin을 이용한 세포 간 소통 상호작용 분석
+```{r code12_22}
 # 필요한 설치 및 불러오기 
 BiocManager::install("CelliD") 
 devtools::install_github("BlishLab/scriabin", ref = "main")
@@ -2330,8 +2342,8 @@ pbmc_scriabin_sig <- pbmc_scriabin_sig %>%
 pbmc_alzheimer_SCT.combined <- ScoreInteractionPrograms(pbmc_alzheimer_SCT.combined, pbmc_scriabin_sig)
 ```
 
-[코드 12-24] scriabin 결과 시각화하기
-```{r code12_24}
+[코드 12-23] scriabin 결과 시각화하기
+```{r code12_23}
 # 힛맵을 그리기 위한 툴 불러오기상호작용 시각화하기 
 library(ComplexHeatmap) 
 library(tidyverse)
@@ -2369,8 +2381,8 @@ library(infercnv)
 ### 12.6.2 참조 비의존 복사수 변이 추론
 #### CopyKAT
 
-[코드 12-25] CopyKAT를 이용한 복사수 변이 분석 예시
-```{r code12_25}
+[코드 12-24] CopyKAT를 이용한 복사수 변이 분석 예시
+```{r code12_24}
 # 필요한 툴 설치 및 불러오기
 # devtools::install_github("navinlabcode/copykat")
 library(devtools)
@@ -2401,8 +2413,8 @@ genome="hg20", n.cores=1)
 
 #### SCEVAN
 
-[코드 12-26] SCEVAN을 이용한 복사수 변이 분석 예시
-```{r code12_26}
+[코드 12-25] SCEVAN을 이용한 복사수 변이 분석 예시
+```{r code12_25}
 # 필요한 툴 설치하기 
 library(devtools)
 install_github("miccec/yaGST")
