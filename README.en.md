@@ -143,6 +143,12 @@ Code that is *not* in the book (scratch or reference material) is marked:
 - SRA-Toolkit 3.2.1 (the version used in Chapter 4)
 - Human reference `refdata-gex-GRCh38-2024-A` (Chapter 5)
 
+## Further reading
+
+The link list from the book's appendix, grouped by chapter. → [LINKS.md](LINKS.md)
+
+Suggestions are welcome via **pull request**.
+
 ## Questions
 
 Open a GitHub issue: **Issues** tab → **New issue**.
