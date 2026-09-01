@@ -2048,7 +2048,7 @@ Heatmap(pbmc_scriabin_lig, show_column_names = F, name = "Ligands")
 
 # 리간드 상호작용 세포 유형별 힛맵 - 수용체 
 pbmc_scriabin_rec <- as.matrix(pbmc_alzheimer_SCT.combined[["IPreceptors"]]@data %>% t() %>% 
-                              as.data.frame() %>% add_column(celltype = pbmc$customclassif) %>% 
+                              as.data.frame() %>% add_column(celltype = pbmc_alzheimer_SCT.combined$customclassif) %>% 
                               group_by(celltype) %>% 
                               summarise_if(is.numeric, mean) %>% column_to_rownames("celltype")) 
 Heatmap(pbmc_scriabin_rec, show_column_names = F, name = "Receptors") 
